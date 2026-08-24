@@ -1,26 +1,802 @@
+/* =============================================================================
+   SignSig — global stylesheet and design-token source of truth.
+
+   Tailwind CSS v4 (CSS-first configuration). There is NO tailwind.config.ts and
+   there must not be one: all theme configuration lives in the @theme blocks
+   below. See docs/DESIGN-SYSTEM.md.
+
+   THREE LAYERS, IN ORDER:
+     LAYER 1  Primitives  — raw scale values. Named for what they ARE.
+                            *** THE ONLY PLACE IN THIS REPOSITORY WHERE A RAW
+                                COLOUR LITERAL MAY APPEAR. ***
+     LAYER 2  Semantic    — named for their ROLE. This is what components
+                            consume. These flip between light and dark.
+     LAYER 3  Usage       — Tailwind utility classes in .tsx files.
+                            `bg-primary`, not `bg-[#30A46C]`. Never a literal.
+
+   Adding a colour? Primitive first, then semantic, then document it, then
+   consume the token. Never skip to Layer 3. See AGENTS.md § Escape hatch.
+   ============================================================================= */
+
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark mode is class-based (`next-themes` with attribute="class"). */
+@custom-variant dark (&:is(.dark *));
+
+/* =============================================================================
+   LAYER 1 — PRIMITIVES
+   -----------------------------------------------------------------------------
+   Sourced from Radix Colors (@radix-ui/colors@3.0.0), converted from sRGB hex
+   to OKLCH; the original hex is retained in a trailing comment as provenance so
+   any future session can re-verify with:
+     node -e "console.log(require('@radix-ui/colors').green.green9)"
+
+   Primitives DO NOT flip between light and dark. A primitive name always means
+   exactly one colour. The dark ramps are separate tokens (`--brand-dark-*`),
+   and Layer 2 chooses which ramp to point at per mode.
+
+   Radix step semantics (why a given step is used in Layer 2):
+      1 app background          7 element border / focus ring
+      2 subtle background       8 hovered element border
+      3 element background      9 SOLID background  <- the brand colour
+      4 hovered element bg     10 hovered solid background
+      5 active / selected bg   11 low-contrast text (accessible on 1-3)
+      6 subtle border          12 high-contrast text
+   ============================================================================= */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ------------------------------------------------------------------------ */
+  /* Absolute anchors. Not part of any ramp.                                  */
+  --white: oklch(1 0 0); /* #ffffff */
+  --black: oklch(0 0 0); /* #000000 */
+
+  /* ------------------------------------------------------------------------ */
+  /* BRAND — Radix `green`. Step 9 === #30A46C, the SignSig brand primary (verified against @radix-ui/colors@3.0.0). */
+  /* radix:green */
+  --brand-1: oklch(0.9942 0.0041 157.18); /* #fbfefc */
+  --brand-2: oklch(0.9814 0.0099 155.1); /* #f4fbf6 */
+  --brand-3: oklch(0.9582 0.0223 155.92); /* #e6f6eb */
+  --brand-4: oklch(0.9335 0.0372 156.43); /* #d6f1df */
+  --brand-5: oklch(0.8988 0.0489 157.25); /* #c4e8d1 */
+  --brand-6: oklch(0.8558 0.0641 158.2); /* #adddc0 */
+  --brand-7: oklch(0.7982 0.0832 159.15); /* #8eceaa */
+  --brand-8: oklch(0.7156 0.1133 160.28); /* #5bb98b */
+  --brand-9: oklch(0.6406 0.1329 157.68); /* #30a46c */
+  --brand-10: oklch(0.6115 0.1266 158.23); /* #2b9a66 */
+  --brand-11: oklch(0.5435 0.1116 159.5); /* #218358 */
+  --brand-12: oklch(0.322 0.0475 164.53); /* #193b2d */
+  /* radix:greenDark */
+  --brand-dark-1: oklch(0.1873 0.0123 167.01); /* #0e1512 */
+  --brand-dark-2: oklch(0.2117 0.0154 165.91); /* #121b17 */
+  --brand-dark-3: oklch(0.2721 0.0396 162.17); /* #132d21 */
+  --brand-dark-4: oklch(0.3173 0.0569 161.84); /* #113b29 */
+  --brand-dark-5: oklch(0.3649 0.066 161.23); /* #174933 */
+  --brand-dark-6: oklch(0.4124 0.0721 160.95); /* #20573e */
+  --brand-dark-7: oklch(0.467 0.0823 160.24); /* #28684a */
+  --brand-dark-8: oklch(0.528 0.0963 159.39); /* #2f7c57 */
+  --brand-dark-9: oklch(0.6406 0.1329 157.68); /* #30a46c */
+  --brand-dark-10: oklch(0.6746 0.1406 157.7); /* #33b074 */
+  --brand-dark-11: oklch(0.7794 0.1655 157.29); /* #3dd68c */
+  --brand-dark-12: oklch(0.9048 0.083 158.18); /* #b1f1cb */
+  /* radix:greenA */
+  --brand-a-1: oklch(0.7031 0.2136 146.2 / 0.0157); /* #00c04004 */
+  --brand-a-2: oklch(0.6221 0.1933 145.42 / 0.0431); /* #00a32f0b */
+  --brand-a-3: oklch(0.6253 0.1917 145.88 / 0.098); /* #00a43319 */
+  --brand-a-4: oklch(0.6368 0.1927 146.35 / 0.1608); /* #00a83829 */
+  --brand-a-5: oklch(0.6037 0.1782 147.21 / 0.2314); /* #019c393b */
+  --brand-a-6: oklch(0.5872 0.1688 148.27 / 0.3216); /* #00963c52 */
+  --brand-a-7: oklch(0.5737 0.1593 149.66 / 0.4431); /* #00914071 */
+  --brand-a-8: oklch(0.5783 0.1505 152.48 / 0.6431); /* #00924ba4 */
+  --brand-a-9: oklch(0.5697 0.1476 152.69 / 0.8118); /* #008f4acf */
+  --brand-a-10: oklch(0.5438 0.1389 153.38 / 0.8314); /* #008647d4 */
+  --brand-a-11: oklch(0.4819 0.1189 155.11 / 0.8706); /* #00713fde */
+  --brand-a-12: oklch(0.2372 0.053 160.76 / 0.902); /* #002616e6 */
+  /* radix:greenDarkA */
+  --brand-dark-a-1: oklch(0.7833 0.2423 145.57 / 0.0196); /* #00de4505 */
+  --brand-dark-a-2: oklch(0.8674 0.199 157.05 / 0.0431); /* #29f99d0b */
+  --brand-dark-a-3: oklch(0.8809 0.2106 155.44 / 0.1176); /* #22ff991e */
+  --brand-dark-a-4: oklch(0.8798 0.2124 155.77 / 0.1765); /* #11ff992d */
+  --brand-dark-a-5: oklch(0.8835 0.2015 157.3 / 0.2353); /* #2bffa23c */
+  --brand-dark-a-6: oklch(0.8889 0.1889 158.3 / 0.2941); /* #44ffaa4b */
+  --brand-dark-a-7: oklch(0.8869 0.1809 158.47 / 0.3686); /* #50fdac5e */
+  --brand-dark-a-8: oklch(0.8928 0.1811 158.12 / 0.451); /* #54ffad73 */
+  --brand-dark-a-9: oklch(0.8877 0.194 156.7 / 0.6196); /* #44ffa49e */
+  --brand-dark-a-10: oklch(0.885 0.1931 156.91 / 0.6706); /* #43fea4ab */
+  --brand-dark-a-11: oklch(0.8858 0.1913 157 / 0.8314); /* #46fea5d4 */
+  --brand-dark-a-12: oklch(0.9441 0.0869 158.41 / 0.9412); /* #bbffd7f0 */
+
+  /* ------------------------------------------------------------------------ */
+  /* NEUTRAL — Radix `gray`. Pure neutral, no hue cast, so it will not fight greys sampled from Figma. */
+  /* radix:gray */
+  --neutral-1: oklch(0.9911 0 0); /* #fcfcfc */
+  --neutral-2: oklch(0.9821 0 0); /* #f9f9f9 */
+  --neutral-3: oklch(0.9551 0 0); /* #f0f0f0 */
+  --neutral-4: oklch(0.931 0 0); /* #e8e8e8 */
+  --neutral-5: oklch(0.9067 0 0); /* #e0e0e0 */
+  --neutral-6: oklch(0.8853 0 0); /* #d9d9d9 */
+  --neutral-7: oklch(0.8514 0 0); /* #cecece */
+  --neutral-8: oklch(0.7921 0 0); /* #bbbbbb */
+  --neutral-9: oklch(0.6434 0 0); /* #8d8d8d */
+  --neutral-10: oklch(0.61 0 0); /* #838383 */
+  --neutral-11: oklch(0.5032 0 0); /* #646464 */
+  --neutral-12: oklch(0.2435 0 0); /* #202020 */
+  /* radix:grayDark */
+  --neutral-dark-1: oklch(0.1776 0 0); /* #111111 */
+  --neutral-dark-2: oklch(0.2134 0 0); /* #191919 */
+  --neutral-dark-3: oklch(0.252 0 0); /* #222222 */
+  --neutral-dark-4: oklch(0.285 0 0); /* #2a2a2a */
+  --neutral-dark-5: oklch(0.3132 0 0); /* #313131 */
+  --neutral-dark-6: oklch(0.3485 0 0); /* #3a3a3a */
+  --neutral-dark-7: oklch(0.4017 0 0); /* #484848 */
+  --neutral-dark-8: oklch(0.4891 0 0); /* #606060 */
+  --neutral-dark-9: oklch(0.5382 0 0); /* #6e6e6e */
+  --neutral-dark-10: oklch(0.5829 0 0); /* #7b7b7b */
+  --neutral-dark-11: oklch(0.7699 0 0); /* #b4b4b4 */
+  --neutral-dark-12: oklch(0.9491 0 0); /* #eeeeee */
+
+  /* ------------------------------------------------------------------------ */
+  /* DANGER — Radix `red`. Destructive actions and error states. */
+  /* radix:red */
+  --danger-1: oklch(0.9934 0.0032 17.21); /* #fffcfc */
+  --danger-2: oklch(0.9823 0.0086 17.3); /* #fff7f7 */
+  --danger-3: oklch(0.9555 0.0207 13.86); /* #feebec */
+  --danger-4: oklch(0.9217 0.0401 16); /* #ffdbdc */
+  --danger-5: oklch(0.892 0.0567 16.93); /* #ffcdce */
+  --danger-6: oklch(0.8569 0.0741 17.68); /* #fdbdbe */
+  --danger-7: oklch(0.807 0.0888 18.32); /* #f4a9aa */
+  --danger-8: oklch(0.7443 0.1133 18.75); /* #eb8e90 */
+  --danger-9: oklch(0.6256 0.1933 23.03); /* #e5484d */
+  --danger-10: oklch(0.599 0.1947 24.04); /* #dc3e42 */
+  --danger-11: oklch(0.557 0.1974 25.17); /* #ce2c31 */
+  --danger-12: oklch(0.339 0.1089 16.6); /* #641723 */
+  /* radix:redDark */
+  --danger-dark-1: oklch(0.188 0.0135 18.42); /* #191111 */
+  --danger-dark-2: oklch(0.2046 0.0217 14.06); /* #201314 */
+  --danger-dark-3: oklch(0.251 0.0649 12.69); /* #3b1219 */
+  --danger-dark-4: oklch(0.2893 0.0951 14.33); /* #500f1c */
+  --danger-dark-5: oklch(0.3321 0.1067 15.53); /* #611623 */
+  --danger-dark-6: oklch(0.3814 0.1108 16.8); /* #72232d */
+  --danger-dark-7: oklch(0.4502 0.1211 18.77); /* #8c333a */
+  --danger-dark-8: oklch(0.5436 0.1458 21.76); /* #b54548 */
+  --danger-dark-9: oklch(0.6256 0.1933 23.03); /* #e5484d */
+  --danger-dark-10: oklch(0.6634 0.1774 22.85); /* #ec5d5e */
+  --danger-dark-11: oklch(0.7804 0.1281 22.14); /* #ff9592 */
+  --danger-dark-12: oklch(0.9024 0.0527 6.45); /* #ffd1d9 */
+
+  /* ------------------------------------------------------------------------ */
+  /* WARNING — Radix `amber`. NOTE: amber is a *bright* scale — step 9 requires DARK foreground text, not white. */
+  /* radix:amber */
+  --warning-1: oklch(0.9943 0.0028 84.56); /* #fefdfb */
+  --warning-2: oklch(0.9856 0.0238 99.1); /* #fefbe9 */
+  --warning-3: oklch(0.9695 0.0684 100.39); /* #fff7c2 */
+  --warning-4: oklch(0.9447 0.1034 97.91); /* #ffee9c */
+  --warning-5: oklch(0.918 0.1326 98.23); /* #fbe577 */
+  --warning-6: oklch(0.8804 0.1233 93.39); /* #f3d673 */
+  --warning-7: oklch(0.8273 0.1224 86.69); /* #e9c162 */
+  --warning-8: oklch(0.7577 0.1403 76.72); /* #e2a336 */
+  --warning-9: oklch(0.8537 0.1572 84.13); /* #ffc53d */
+  --warning-10: oklch(0.8313 0.1679 80.85); /* #ffba18 */
+  --warning-11: oklch(0.5706 0.1291 63.94); /* #ab6400 */
+  --warning-12: oklch(0.3522 0.0486 54.17); /* #4f3422 */
+  /* radix:amberDark */
+  --warning-dark-1: oklch(0.185 0.0134 77.8); /* #16120c */
+  --warning-dark-2: oklch(0.212 0.0184 81.99); /* #1d180f */
+  --warning-dark-3: oklch(0.2578 0.0442 74.48); /* #302008 */
+  --warning-dark-4: oklch(0.2955 0.0627 73.88); /* #3f2700 */
+  --warning-dark-5: oklch(0.3363 0.0717 72.9); /* #4d3000 */
+  --warning-dark-6: oklch(0.3863 0.0784 75.25); /* #5c3d05 */
+  --warning-dark-7: oklch(0.4542 0.0824 74.96); /* #714f19 */
+  --warning-dark-8: oklch(0.5364 0.0964 73.44); /* #8f6424 */
+  --warning-dark-9: oklch(0.8537 0.1572 84.13); /* #ffc53d */
+  --warning-dark-10: oklch(0.8849 0.1805 94.78); /* #ffd60a */
+  --warning-dark-11: oklch(0.8617 0.173 89.02); /* #ffca16 */
+  --warning-dark-12: oklch(0.9351 0.0717 86.07); /* #ffe7b3 */
+
+  /* ------------------------------------------------------------------------ */
+  /* INFO — Radix `blue`. Informational states. */
+  /* radix:blue */
+  --info-1: oklch(0.9931 0.0034 247.86); /* #fbfdff */
+  --info-2: oklch(0.982 0.0092 242.83); /* #f4faff */
+  --info-3: oklch(0.9597 0.0201 238.66); /* #e6f4fe */
+  --info-4: oklch(0.9381 0.035 234.8); /* #d5efff */
+  --info-5: oklch(0.9051 0.0513 240.31); /* #c2e5ff */
+  --info-6: oklch(0.8633 0.0682 243.32); /* #acd8fc */
+  --info-7: oklch(0.8098 0.0887 243.05); /* #8ec8f6 */
+  --info-8: oklch(0.7336 0.1214 243.09); /* #5eb1ef */
+  --info-9: oklch(0.6493 0.193 251.78); /* #0090ff */
+  --info-10: oklch(0.6223 0.1831 251.7); /* #0588f0 */
+  --info-11: oklch(0.5558 0.1622 252.19); /* #0d74ce */
+  --info-12: oklch(0.324 0.0964 258.82); /* #113264 */
+  /* radix:blueDark */
+  --info-dark-1: oklch(0.1936 0.0255 256.49); /* #0d1520 */
+  --info-dark-2: oklch(0.2129 0.0303 261.25); /* #111927 */
+  --info-dark-3: oklch(0.2745 0.0663 253.93); /* #0d2847 */
+  --info-dark-4: oklch(0.3201 0.0968 252.35); /* #003362 */
+  --info-dark-5: oklch(0.3671 0.1059 250.7); /* #004074 */
+  --info-dark-6: oklch(0.416 0.1133 252.01); /* #104d87 */
+  --info-dark-7: oklch(0.4741 0.1219 253.09); /* #205d9e */
+  --info-dark-8: oklch(0.5406 0.1395 253.17); /* #2870bd */
+  --info-dark-9: oklch(0.6493 0.193 251.78); /* #0090ff */
+  --info-dark-10: oklch(0.6884 0.1693 251.4); /* #3b9eff */
+  --info-dark-11: oklch(0.7642 0.1257 249.46); /* #70b8ff */
+  --info-dark-12: oklch(0.9071 0.051 238.45); /* #c2e6ff */
+
+  /* ------------------------------------------------------------------------ */
+  /* OVERLAY — Radix `blackA` / `whiteA`. Scrims, backdrops, and translucent fills. */
+  /* radix:blackA */
+  --overlay-1: oklch(0 0 0 / 0.05); /* rgba(0, 0, 0, 0.05) */
+  --overlay-2: oklch(0 0 0 / 0.1); /* rgba(0, 0, 0, 0.1) */
+  --overlay-3: oklch(0 0 0 / 0.15); /* rgba(0, 0, 0, 0.15) */
+  --overlay-4: oklch(0 0 0 / 0.2); /* rgba(0, 0, 0, 0.2) */
+  --overlay-5: oklch(0 0 0 / 0.3); /* rgba(0, 0, 0, 0.3) */
+  --overlay-6: oklch(0 0 0 / 0.4); /* rgba(0, 0, 0, 0.4) */
+  --overlay-7: oklch(0 0 0 / 0.5); /* rgba(0, 0, 0, 0.5) */
+  --overlay-8: oklch(0 0 0 / 0.6); /* rgba(0, 0, 0, 0.6) */
+  --overlay-9: oklch(0 0 0 / 0.7); /* rgba(0, 0, 0, 0.7) */
+  --overlay-10: oklch(0 0 0 / 0.8); /* rgba(0, 0, 0, 0.8) */
+  --overlay-11: oklch(0 0 0 / 0.9); /* rgba(0, 0, 0, 0.9) */
+  --overlay-12: oklch(0 0 0 / 0.95); /* rgba(0, 0, 0, 0.95) */
+  /* radix:whiteA */
+  --overlay-dark-1: oklch(1 0 0 / 0.05); /* rgba(255, 255, 255, 0.05) */
+  --overlay-dark-2: oklch(1 0 0 / 0.1); /* rgba(255, 255, 255, 0.1) */
+  --overlay-dark-3: oklch(1 0 0 / 0.15); /* rgba(255, 255, 255, 0.15) */
+  --overlay-dark-4: oklch(1 0 0 / 0.2); /* rgba(255, 255, 255, 0.2) */
+  --overlay-dark-5: oklch(1 0 0 / 0.3); /* rgba(255, 255, 255, 0.3) */
+  --overlay-dark-6: oklch(1 0 0 / 0.4); /* rgba(255, 255, 255, 0.4) */
+  --overlay-dark-7: oklch(1 0 0 / 0.5); /* rgba(255, 255, 255, 0.5) */
+  --overlay-dark-8: oklch(1 0 0 / 0.6); /* rgba(255, 255, 255, 0.6) */
+  --overlay-dark-9: oklch(1 0 0 / 0.7); /* rgba(255, 255, 255, 0.7) */
+  --overlay-dark-10: oklch(1 0 0 / 0.8); /* rgba(255, 255, 255, 0.8) */
+  --overlay-dark-11: oklch(1 0 0 / 0.9); /* rgba(255, 255, 255, 0.9) */
+  --overlay-dark-12: oklch(1 0 0 / 0.95); /* rgba(255, 255, 255, 0.95) */
 }
+
+/* =============================================================================
+   LAYER 2 — SEMANTIC TOKENS
+   -----------------------------------------------------------------------------
+   Named for ROLE, never for hue. These are what components consume, and the
+   only colour tokens exposed to Tailwind (see the @theme inline bridge below).
+
+   Names are deliberately shadcn/ui-compatible, so shadcn components theme
+   themselves with zero patching. Do not rename them.
+
+   Every token defined in :root MUST also be defined in .dark. A token that
+   exists in one block and not the other is a bug — dark mode will inherit the
+   light value and look broken.
+   ============================================================================= */
+
+:root {
+  /* Page and surfaces ------------------------------------------------------ */
+  --background: var(--white);
+  --foreground: var(--neutral-12);
+
+  /* Surface elevation. Use these for stacked panels; higher = closer to user. */
+  --surface-1: var(--white);
+  --surface-2: var(--neutral-2);
+  --surface-3: var(--neutral-3);
+
+  --card: var(--white);
+  --card-foreground: var(--neutral-12);
+  --popover: var(--white);
+  --popover-foreground: var(--neutral-12);
+
+  /* Brand / primary -------------------------------------------------------- */
+  /* --primary is Radix green step 9 == #30A46C, the SignSig brand primary.    */
+  /* ACCESSIBILITY: white on step 9 is ~3.16:1 — it satisfies WCAG AA for      */
+  /* large text (>=18.66px bold / >=24px) and non-text UI, but NOT AA for      */
+  /* normal-size body text. For brand-coloured TEXT on a light background use  */
+  /* --primary-text (step 11, ~4.7:1). See docs/DESIGN-SYSTEM.md.              */
+  --primary: var(--brand-9);
+  --primary-foreground: var(--white);
+  --primary-hover: var(--brand-10);
+  --primary-active: var(--brand-11);
+  --primary-subtle: var(--brand-3);
+  --primary-subtle-foreground: var(--brand-11);
+  --primary-text: var(--brand-11);
+  --primary-border: var(--brand-7);
+
+  --secondary: var(--neutral-3);
+  --secondary-foreground: var(--neutral-12);
+
+  --muted: var(--neutral-3);
+  --muted-foreground: var(--neutral-11);
+
+  --accent: var(--brand-3);
+  --accent-foreground: var(--brand-11);
+
+  /* Status ----------------------------------------------------------------- */
+  --destructive: var(--danger-9);
+  --destructive-foreground: var(--white);
+  --destructive-subtle: var(--danger-3);
+  --destructive-text: var(--danger-11);
+
+  --success: var(--brand-9);
+  --success-foreground: var(--white);
+  --success-subtle: var(--brand-3);
+  --success-text: var(--brand-11);
+
+  /* Amber is a BRIGHT scale: step 9 needs a DARK foreground, never white. */
+  --warning: var(--warning-9);
+  --warning-foreground: var(--neutral-12);
+  --warning-subtle: var(--warning-3);
+  --warning-text: var(--warning-11);
+
+  --info: var(--info-9);
+  --info-foreground: var(--white);
+  --info-subtle: var(--info-3);
+  --info-text: var(--info-11);
+
+  /* Lines, fields, focus --------------------------------------------------- */
+  --border: var(--neutral-6);
+  --border-strong: var(--neutral-7);
+  --input: var(--neutral-7);
+  --ring: var(--brand-8);
+
+  /* Scrim behind modals, drawers, mobile nav. */
+  --scrim: var(--overlay-9);
+
+  /* shadcn compatibility --------------------------------------------------- */
+  /* shadcn components reference these; leaving them undefined breaks them. */
+  --chart-1: var(--brand-9);
+  --chart-2: var(--info-9);
+  --chart-3: var(--warning-9);
+  --chart-4: var(--danger-9);
+  --chart-5: var(--neutral-9);
+
+  --sidebar: var(--neutral-2);
+  --sidebar-foreground: var(--neutral-12);
+  --sidebar-primary: var(--brand-9);
+  --sidebar-primary-foreground: var(--white);
+  --sidebar-accent: var(--brand-3);
+  --sidebar-accent-foreground: var(--brand-11);
+  --sidebar-border: var(--neutral-6);
+  --sidebar-ring: var(--brand-8);
+}
+
+.dark {
+  /* Page and surfaces ------------------------------------------------------ */
+  --background: var(--neutral-dark-1);
+  --foreground: var(--neutral-dark-12);
+
+  --surface-1: var(--neutral-dark-1);
+  --surface-2: var(--neutral-dark-2);
+  --surface-3: var(--neutral-dark-3);
+
+  --card: var(--neutral-dark-2);
+  --card-foreground: var(--neutral-dark-12);
+  --popover: var(--neutral-dark-3);
+  --popover-foreground: var(--neutral-dark-12);
+
+  /* Brand / primary -------------------------------------------------------- */
+  /* Radix keeps step 9 identical across light and dark, so the brand solid is */
+  /* still exactly #30A46C here — the brand does not shift between modes.      */
+  --primary: var(--brand-dark-9);
+  --primary-foreground: var(--white);
+  --primary-hover: var(--brand-dark-10);
+  --primary-active: var(--brand-dark-11);
+  --primary-subtle: var(--brand-dark-3);
+  --primary-subtle-foreground: var(--brand-dark-11);
+  --primary-text: var(--brand-dark-11);
+  --primary-border: var(--brand-dark-7);
+
+  --secondary: var(--neutral-dark-3);
+  --secondary-foreground: var(--neutral-dark-12);
+
+  --muted: var(--neutral-dark-3);
+  --muted-foreground: var(--neutral-dark-11);
+
+  --accent: var(--brand-dark-3);
+  --accent-foreground: var(--brand-dark-11);
+
+  /* Status ----------------------------------------------------------------- */
+  --destructive: var(--danger-dark-9);
+  --destructive-foreground: var(--white);
+  --destructive-subtle: var(--danger-dark-3);
+  --destructive-text: var(--danger-dark-11);
+
+  --success: var(--brand-dark-9);
+  --success-foreground: var(--white);
+  --success-subtle: var(--brand-dark-3);
+  --success-text: var(--brand-dark-11);
+
+  --warning: var(--warning-dark-9);
+  --warning-foreground: var(--neutral-dark-1);
+  --warning-subtle: var(--warning-dark-3);
+  --warning-text: var(--warning-dark-11);
+
+  --info: var(--info-dark-9);
+  --info-foreground: var(--white);
+  --info-subtle: var(--info-dark-3);
+  --info-text: var(--info-dark-11);
+
+  /* Lines, fields, focus --------------------------------------------------- */
+  --border: var(--neutral-dark-6);
+  --border-strong: var(--neutral-dark-7);
+  --input: var(--neutral-dark-7);
+  --ring: var(--brand-dark-8);
+
+  /* A black scrim still reads correctly over a dark page. */
+  --scrim: var(--overlay-9);
+
+  /* shadcn compatibility --------------------------------------------------- */
+  --chart-1: var(--brand-dark-9);
+  --chart-2: var(--info-dark-9);
+  --chart-3: var(--warning-dark-9);
+  --chart-4: var(--danger-dark-9);
+  --chart-5: var(--neutral-dark-9);
+
+  --sidebar: var(--neutral-dark-2);
+  --sidebar-foreground: var(--neutral-dark-12);
+  --sidebar-primary: var(--brand-dark-9);
+  --sidebar-primary-foreground: var(--white);
+  --sidebar-accent: var(--brand-dark-3);
+  --sidebar-accent-foreground: var(--brand-dark-11);
+  --sidebar-border: var(--neutral-dark-6);
+  --sidebar-ring: var(--brand-dark-8);
+}
+
+/* =============================================================================
+   TAILWIND BRIDGE — exposes Layer 2 to utility classes.
+   -----------------------------------------------------------------------------
+   `@theme inline` is REQUIRED for anything that flips in dark mode: it makes the
+   generated utility emit `var(--primary)` rather than baking in the light value,
+   so the `.dark` overrides above take effect.
+
+   Adding a semantic token? Add it in BOTH :root and .dark above, then add one
+   `--color-<name>: var(--<name>);` line here. Miss this step and the token
+   exists but no utility class does.
+   ============================================================================= */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-subtle-foreground: var(--primary-subtle-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-text: var(--destructive-text);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-text: var(--success-text);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-text: var(--warning-text);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-text: var(--info-text);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-scrim: var(--scrim);
+
+  /* shadcn compatibility */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =============================================================================
+   NON-COLOUR SCALES
+   -----------------------------------------------------------------------------
+   These do NOT flip between light and dark, so plain `@theme` is correct here.
+   Hardcoding any of these values in a component is the same failure as
+   hardcoding a hex: `z-[9999]`, `duration-[437ms]` and `text-[42px]` are all
+   rule violations. If a design needs a value that is not here, ADD IT HERE.
+   ============================================================================= */
+
+@theme {
+  /* Fonts. Loaded via next/font in src/app/layout.tsx, which sets --font-inter
+     and --font-geist-mono on <html>. Never load fonts from a CDN <link>. */
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+
+  /* Layout. The canonical desktop design frame is 1440px wide with a 1200px
+     content column (120px of gutter each side). See docs/RESPONSIVE.md.
+     --container-content generates the `max-w-content` utility that <Container>
+     uses; it is the single source of truth for page width. */
+  --container-content: 75rem; /* 1200px — content column at the 1440px frame */
+  --container-narrow: 45rem; /* 720px  — prose / single-column reading width */
+  --container-wide: 90rem; /* 1440px — full-bleed sections that still clamp */
+
+  /* -- FLUID TYPE SCALE (generated) -------------------------------------- */
+  /* Fluid type scale. Interpolates 360px -> 1440px (canonical frame). */
+  /* Each step binds size + line-height + letter-spacing + weight, so
+     `text-h2` sets all four in one class. Do not use `text-[42px]`. */
+  --text-display-1: clamp(2.5rem, 1.8333rem + 2.963vw, 4.5rem); /* 40->72px */
+  --text-display-1--line-height: 1.05;
+  --text-display-1--letter-spacing: -0.022em;
+  --text-display-1--font-weight: 700;
+  --text-display-2: clamp(
+    2.125rem,
+    1.5833rem + 2.407vw,
+    3.75rem
+  ); /* 34->60px */
+  --text-display-2--line-height: 1.08;
+  --text-display-2--letter-spacing: -0.02em;
+  --text-display-2--font-weight: 700;
+  --text-h1: clamp(1.875rem, 1.5rem + 1.667vw, 3rem); /* 30->48px */
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 700;
+  --text-h2: clamp(1.625rem, 1.3333rem + 1.296vw, 2.5rem); /* 26->40px */
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 600;
+  --text-h3: clamp(1.375rem, 1.1667rem + 0.926vw, 2rem); /* 22->32px */
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+  --text-h4: clamp(1.25rem, 1.1667rem + 0.37vw, 1.5rem); /* 20->24px */
+  --text-h4--line-height: 1.3;
+  --text-h4--letter-spacing: -0.005em;
+  --text-h4--font-weight: 600;
+  --text-h5: clamp(1.125rem, 1.0833rem + 0.185vw, 1.25rem); /* 18->20px */
+  --text-h5--line-height: 1.4;
+  --text-h5--letter-spacing: 0em;
+  --text-h5--font-weight: 600;
+  --text-body-lg: clamp(
+    1.0625rem,
+    1.0417rem + 0.093vw,
+    1.125rem
+  ); /* 17->18px */
+  --text-body-lg--line-height: 1.6;
+  --text-body-lg--letter-spacing: 0em;
+  --text-body-lg--font-weight: 400;
+  --text-body: 1rem; /* 16px — never shrink body copy below this */
+  --text-body--line-height: 1.6;
+  --text-body--letter-spacing: 0em;
+  --text-body--font-weight: 400;
+  --text-body-sm: 0.875rem; /* 14px */
+  --text-body-sm--line-height: 1.5;
+  --text-body-sm--letter-spacing: 0em;
+  --text-body-sm--font-weight: 400;
+  --text-caption: 0.75rem; /* 12px */
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0.01em;
+  --text-caption--font-weight: 400;
+  --text-overline: 0.75rem; /* 12px — pair with `uppercase` */
+  --text-overline--line-height: 1.4;
+  --text-overline--letter-spacing: 0.08em;
+  --text-overline--font-weight: 600;
+
+  /* -- FLUID SPACING (generated) ----------------------------------------- */
+  /* Mobile values are ~53-60% of desktop, per the derivation doctrine in
+     docs/RESPONSIVE.md. Generates `py-section-y`, `gap-grid-gap`, etc. */
+  --spacing-section-y: clamp(4rem, 2.8333rem + 5.185vw, 7.5rem); /* 64->120px */
+  --spacing-section-y-sm: clamp(
+    2.5rem,
+    1.6667rem + 3.704vw,
+    5rem
+  ); /* 40->80px */
+  --spacing-section-y-lg: clamp(5.5rem, 4rem + 6.667vw, 10rem); /* 88->160px */
+  --spacing-stack-gap: clamp(2rem, 1.6667rem + 1.481vw, 3rem); /* 32->48px */
+  --spacing-grid-gap: clamp(1.25rem, 1rem + 1.111vw, 2rem); /* 20->32px */
+
+  /* Container gutters — the MINIMUM breathing room at the viewport edge, which
+     only bites below the content-column width. Per the derivation doctrine:
+     16px mobile, 32px tablet, 48px desktop. */
+  --spacing-gutter: 1rem; /* 16px — base / mobile */
+  --spacing-gutter-md: 2rem; /* 32px — md and up */
+  --spacing-gutter-lg: 3rem; /* 48px — lg and up */
+
+  /* Radius. shadcn derives its sm/md/lg/xl steps from --radius (set in :root
+     below), so changing that one value rescales the whole set coherently. */
+  --radius-pill: 9999px;
+
+  /* Shadows, built from the overlay alpha ramp rather than raw rgba(). */
+  --shadow-xs: 0 1px 2px 0 var(--overlay-2);
+  --shadow-sm: 0 1px 3px 0 var(--overlay-3), 0 1px 2px -1px var(--overlay-2);
+  --shadow-md: 0 4px 8px -2px var(--overlay-3), 0 2px 4px -2px var(--overlay-2);
+  --shadow-lg:
+    0 12px 20px -4px var(--overlay-4), 0 4px 8px -4px var(--overlay-3);
+  --shadow-xl:
+    0 24px 40px -8px var(--overlay-5), 0 8px 16px -8px var(--overlay-4);
+  --shadow-2xl: 0 32px 64px -12px var(--overlay-6);
+  --shadow-hairline: 0 0 0 1px var(--overlay-3);
+
+  /* Motion easings. `--ease-*` is a native Tailwind v4 namespace, so these
+     generate `ease-standard`, `ease-emphasized`, etc. automatically. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* -----------------------------------------------------------------------------
+   RADIUS BASE, Z-INDEX AND DURATION SCALES
+   Tailwind v4 has no `--z-index-*` or `--duration-*` theme namespace, so these
+   are plain custom properties plus explicit @utility definitions. That is what
+   makes `z-header` and `duration-base` real, greppable classes — and what makes
+   `z-[9999]` unnecessary. Never invent a stacking value inline; add a named
+   layer here so the stacking order stays legible in one place.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --radius: 0.75rem; /* 12px — provisional; confirm against the first design */
+
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-dropdown: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-popover: 70;
+  --z-toast: 80;
+  --z-tooltip: 90;
+  --z-skip-link: 100;
+
+  --duration-instant: 75ms;
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+
+  /* Safe-area insets for notched devices, with a 0px floor so any calc() using
+     them stays valid. Consumed by the pt-safe / pb-safe / px-safe utilities. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+@utility z-base {
+  z-index: var(--z-base);
+}
+@utility z-raised {
+  z-index: var(--z-raised);
+}
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+@utility z-header {
+  z-index: var(--z-header);
+}
+@utility z-dropdown {
+  z-index: var(--z-dropdown);
+}
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+@utility z-popover {
+  z-index: var(--z-popover);
+}
+@utility z-toast {
+  z-index: var(--z-toast);
+}
+@utility z-tooltip {
+  z-index: var(--z-tooltip);
+}
+@utility z-skip-link {
+  z-index: var(--z-skip-link);
+}
+
+@utility duration-instant {
+  transition-duration: var(--duration-instant);
+}
+@utility duration-fast {
+  transition-duration: var(--duration-fast);
+}
+@utility duration-base {
+  transition-duration: var(--duration-base);
+}
+@utility duration-slow {
+  transition-duration: var(--duration-slow);
+}
+@utility duration-slower {
+  transition-duration: var(--duration-slower);
+}
+
+/* Safe-area padding helpers for fixed/sticky chrome on notched devices. */
+@utility pt-safe {
+  padding-top: var(--safe-top);
+}
+@utility pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+@utility px-safe {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* =============================================================================
+   BASE LAYER
+   ============================================================================= */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-body text-foreground antialiased;
+  }
+
+  /* Never remove a focus ring without replacing it. This is the replacement. */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Anything scrolled to via an anchor should clear the sticky header. */
+  :target {
+    scroll-margin-top: calc(var(--spacing) * 24);
+  }
+
+  /* Honour the OS "reduce motion" setting globally, so no individual component
+     has to remember to. Bespoke animation should still check the media query. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

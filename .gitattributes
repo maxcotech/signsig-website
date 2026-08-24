@@ -1,0 +1,21 @@
+# Deterministic line endings. Prettier is configured with endOfLine: "lf", so
+# without this a checkout on Windows produces CRLF and every formatted file
+# shows as fully modified. Multiple machines and agents touch this repo.
+* text=auto eol=lf
+
+# Binary assets — never normalise or diff these as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.pdf   binary
+
+# Generated; collapse in diffs and reviews.
+package-lock.json linguist-generated=true -diff

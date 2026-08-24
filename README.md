@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SignSig website
 
-## Getting Started
+Marketing site for SignSig. Next.js 16 (App Router) · React 19 · TypeScript ·
+Tailwind CSS v4 · shadcn/ui.
 
-First, run the development server:
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Commands
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command                     | Does                                                       |
+| --------------------------- | ---------------------------------------------------------- |
+| `npm run dev`               | Dev server                                                 |
+| `npm run check`             | **THE GATE** — typecheck → lint → colours → tokens → build |
+| `npm run build` / `start`   | Production build / serve                                   |
+| `npm run lint` / `lint:fix` | ESLint                                                     |
+| `npm run format`            | Prettier, incl. deterministic Tailwind class ordering      |
+| `npm run check:colors`      | Fail on hardcoded colour values                            |
+| `npm run check:tokens`      | Verify light/dark token parity + Tailwind bridge           |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`npm run check` must pass clean before any change is considered done.
 
-## Learn More
+## If you are an AI agent
 
-To learn more about Next.js, take a look at the following resources:
+**Read [`AGENTS.md`](./AGENTS.md) first, before touching any code.** It is the
+constitution: absolute rules, the pre-flight checklist, and the definition of
+done. `CLAUDE.md` is a pointer to it.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Then read the document that matches your task — see [`docs/`](./docs/README.md).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## The three rules that matter most
 
-## Deploy on Vercel
+1. **No colour literals, ever.** Colours come from semantic tokens
+   (`bg-primary`, `text-muted-foreground`). The build fails otherwise.
+2. **No file over 150 lines** under `src/app`, `src/components`, `src/features`.
+3. **Designs are desktop-only (1440px).** Tablet and mobile are _derived_ using
+   the doctrine table in [`docs/RESPONSIVE.md`](./docs/RESPONSIVE.md). A section
+   that only works at 1440px is not finished.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| File                                                         | For                                                |
+| ------------------------------------------------------------ | -------------------------------------------------- |
+| [`AGENTS.md`](./AGENTS.md)                                   | **The constitution.** Read first.                  |
+| [`docs/DESIGN-SYSTEM.md`](./docs/DESIGN-SYSTEM.md)           | Tokens, colour, type, spacing, motion              |
+| [`docs/STRUCTURE.md`](./docs/STRUCTURE.md)                   | Where files go, naming, decomposition              |
+| [`docs/COMPONENTS.md`](./docs/COMPONENTS.md)                 | What already exists — read before creating         |
+| [`docs/RESPONSIVE.md`](./docs/RESPONSIVE.md)                 | The derivation doctrine                            |
+| [`docs/SEO.md`](./docs/SEO.md)                               | Metadata, JSON-LD, per-page checklist              |
+| [`docs/DESIGN-TRANSLATION.md`](./docs/DESIGN-TRANSLATION.md) | PNG → pixel-perfect workflow                       |
+| [`docs/SESSION-TEMPLATE.md`](./docs/SESSION-TEMPLATE.md)     | Kickoff prompt for a new page session              |
+| [`docs/DECISIONS.md`](./docs/DECISIONS.md)                   | Append-only log of why things are the way they are |
+
+## Environment
+
+| Variable               | Required   | Notes                                                                                                                                                               |
+| ---------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL` | Production | Absolute origin, no trailing slash. Drives `metadataBase`, canonical URLs, OG image URLs and the sitemap. Falls back to `VERCEL_URL`, then `http://localhost:3000`. |
+
+## Known placeholders
+
+Scaffolding that a real design replaces. See the "Open questions" section of
+[`docs/DECISIONS.md`](./docs/DECISIONS.md).
+
+- `src/components/common/logo.tsx` — placeholder mark geometry
+- `src/config/site.ts` — provisional `tagline` and `description`
+- `src/config/navigation.ts` — provisional nav labels
+- `src/features/scaffold-preview/` — **delete once real sections exist**
+- `--radius: 0.75rem` — provisional, confirm against the first card design
+- `public/icons/icon-{192,512}.png` — declared in `manifest.ts`, not yet created
