@@ -4,10 +4,9 @@
  * Anything that must read identically in the header, the footer, the metadata,
  * the OG image and the JSON-LD belongs here — never duplicated at a call site.
  *
- * COPY STATUS: the tagline and description below are PROVISIONAL placeholders,
- * marked so deliberately. Real marketing copy must be transcribed verbatim from
- * a design or supplied by the user; never paraphrase or invent it. Replace these
- * two strings once confirmed and delete this notice.
+ * COPY STATUS: `description` is transcribed verbatim from the home page hero
+ * (2026-08-24). `tagline` remains a short PROVISIONAL placeholder — the design
+ * has no single-line tagline — confirm before launch.
  */
 
 /**
@@ -33,9 +32,9 @@ export const SITE = {
   shortName: "SignSig",
   /** PROVISIONAL — confirm with the user before launch. */
   tagline: "Secure digital signatures",
-  /** PROVISIONAL — confirm with the user before launch. Used as the default meta description. */
+  /** Transcribed from the home page hero paragraph. Used as the default meta description. */
   description:
-    "SignSig is a secure digital signature platform for signing, sending and managing documents.",
+    "Sign, send, and verify documents with legally binding signatures. Every signature includes cryptographic proof of authenticity. Built for businesses and institutions that need certainty.",
   /** BCP 47 language tag for <html lang>. */
   lang: "en",
   /** Open Graph locale format (underscore, not hyphen). */
@@ -43,7 +42,7 @@ export const SITE = {
   /** Used by <JsonLd> for the Organization entity and by the footer. */
   legalName: "SignSig",
   /** Contact address surfaced in the footer and structured data. */
-  email: "hello@signsig.com",
+  email: "support@signsig.com",
   /**
    * Social profiles. Order is the render order in the footer. Keep `label`
    * descriptive — it becomes the accessible name of an icon-only link.

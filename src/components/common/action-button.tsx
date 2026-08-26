@@ -36,8 +36,21 @@ const ACTION_SIZES = {
 
 export type ActionButtonSize = keyof typeof ACTION_SIZES;
 
-export type ActionButtonProps = Omit<ComponentProps<typeof Button>, "size"> & {
+type BaseVariant = ComponentProps<typeof Button>["variant"];
+
+/**
+ * "inverse" is not a shadcn Button variant — it is a home-page-specific dark
+ * pill (near-black fill, light text) seen on the pricing cards. It is layered
+ * on top of the "default" Button variant via className rather than added to
+ * `ui/button.tsx`, which is CLI-owned. Because it uses --foreground/--background
+ * rather than a new colour, it inverts correctly in dark mode for free.
+ */
+export type ActionButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  "size" | "variant"
+> & {
   size?: ActionButtonSize;
+  variant?: BaseVariant | "inverse";
 };
 
 export function ActionButton({
@@ -46,15 +59,18 @@ export function ActionButton({
   variant = "default",
   ...props
 }: ActionButtonProps) {
+  const isInverse = variant === "inverse";
+
   return (
     <Button
       // The underlying size variant is neutralised; ACTION_SIZES wins because
       // cn() runs tailwind-merge, which resolves the height/padding conflicts.
       size="default"
-      variant={variant}
+      variant={isInverse ? "default" : variant}
       className={cn(
         "rounded-lg font-medium transition-colors duration-fast ease-standard",
         ACTION_SIZES[size],
+        isInverse && "bg-foreground text-background hover:bg-foreground/90",
         className,
       )}
       {...props}

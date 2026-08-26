@@ -251,6 +251,23 @@
   --overlay-dark-10: oklch(1 0 0 / 0.8); /* rgba(255, 255, 255, 0.8) */
   --overlay-dark-11: oklch(1 0 0 / 0.9); /* rgba(255, 255, 255, 0.9) */
   --overlay-dark-12: oklch(1 0 0 / 0.95); /* rgba(255, 255, 255, 0.95) */
+
+  /* ------------------------------------------------------------------------ */
+  /* PRICING TILE TINTS — sourced from the home page pricing cards. Sampled
+     directly from the design PNG; not derivable from an existing ramp (each
+     carries a distinct hue cast at very low chroma). Near-miss note: rose and
+     mint are within ~10/255 per channel of --danger-3 / --brand-3 but not
+     identical — flagged rather than silently snapped per docs/DESIGN-TRANSLATION.md. */
+  --tint-lavender: oklch(0.9683 0.0053 286.3); /* #f4f4f8 */
+  --tint-rose: oklch(0.9538 0.0065 17.27); /* #f4eeee */
+  --tint-mint: oklch(0.9643 0.0125 164.8); /* #ecf6f1 */
+
+  /* ------------------------------------------------------------------------ */
+  /* DEGRADED — the amber bar in the system-status uptime chart. Sampled from
+     the design; it is oranger than Radix `amber` step 9 (#ffc53d), so it is a
+     genuinely new value rather than a near-miss worth snapping. Used for the
+     middle state between --success (operational) and --destructive (down). */
+  --orange-9: oklch(0.8026 0.151 66.49); /* #ffa944 */
 }
 
 /* =============================================================================
@@ -353,6 +370,17 @@
   --sidebar-accent-foreground: var(--brand-11);
   --sidebar-border: var(--neutral-6);
   --sidebar-ring: var(--brand-8);
+
+  /* Pricing tile tints (home page). Dark-mode equivalents below trade the exact
+     hue for a plausible dark-surface tint, since the design has no dark comp. */
+  /* Service health. operational -> --success, down -> --destructive; this is
+     the middle state. Same value in both themes: the amber reads correctly on
+     light and dark, exactly like the brand solid. */
+  --status-degraded: var(--orange-9);
+
+  --pricing-tile-starter: var(--tint-lavender);
+  --pricing-tile-professional: var(--tint-rose);
+  --pricing-tile-enterprise: var(--tint-mint);
 }
 
 .dark {
@@ -435,6 +463,14 @@
   --sidebar-accent-foreground: var(--brand-dark-11);
   --sidebar-border: var(--neutral-dark-6);
   --sidebar-ring: var(--brand-dark-8);
+
+  /* Dark-mode pricing tints: the design has no dark comp, so these trade the
+     exact light-mode hue for the nearest tinted step in the dark ramp. */
+  --status-degraded: var(--orange-9);
+
+  --pricing-tile-starter: var(--neutral-dark-3);
+  --pricing-tile-professional: var(--danger-dark-3);
+  --pricing-tile-enterprise: var(--brand-dark-3);
 }
 
 /* =============================================================================
@@ -518,6 +554,13 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-status-degraded: var(--status-degraded);
+
+  /* Home page: pricing card price-tile tints. */
+  --color-pricing-tile-starter: var(--pricing-tile-starter);
+  --color-pricing-tile-professional: var(--pricing-tile-professional);
+  --color-pricing-tile-enterprise: var(--pricing-tile-enterprise);
 }
 
 /* =============================================================================
@@ -531,7 +574,17 @@
 
 @theme {
   /* Fonts. Loaded via next/font in src/app/layout.tsx, which sets --font-inter
-     and --font-geist-mono on <html>. Never load fonts from a CDN <link>. */
+     and --font-geist-mono on <html>. Never load fonts from a CDN <link>.
+
+     *** THE ELEMENT MATTERS. *** The base layer applies `font-sans` to <html>,
+     and custom properties inherit DOWNWARD only. Put next/font's `.variable`
+     classes on <body> and `var(--font-inter)` is undefined at html scope —
+     which makes the whole font-family declaration invalid at computed-value
+     time, so it resets to the browser default SERIF and <body> inherits that.
+     The page then renders entirely in Times. This shipped once; see
+     docs/DECISIONS.md. No fallback is given inside var() deliberately: a loud
+     serif failure is what surfaced the bug, where a silent drop to system-ui
+     would have hidden it. */
   --font-sans:
     var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -548,7 +601,21 @@
      uses; it is the single source of truth for page width. */
   --container-content: 75rem; /* 1200px — content column at the 1440px frame */
   --container-narrow: 45rem; /* 720px  — prose / single-column reading width */
+  /* 832px — a centred measure narrower than the content column, for a
+     secondary 2-up grid that would look stranded at full width (the
+     solutions-page benefit grid). Measured 822px in the design; rounded to a
+     clean 52rem, a 1.2% difference. */
+  --container-compact: 52rem;
+  /* 1040px — a 3-up card grid inset from the content column. Measured 1038px
+     on the SDKs page (three 319px cards, 41px gaps). Neither `content` (1200,
+     16% wider) nor `compact` (832, 20% narrower) is close enough to reuse. */
+  --container-cards: 65rem;
   --container-wide: 90rem; /* 1440px — full-bleed sections that still clamp */
+  /* Header mega-menu panel. Viewport-aware by design: the panel is absolutely
+     positioned under its trigger, so a fixed width would run off the right
+     edge on a narrow desktop. min() lets the columns wrap instead — the
+     fluid-width approach docs/RESPONSIVE.md asks for over a fixed px width. */
+  --container-menu: min(44rem, calc(100vw - 2 * var(--spacing-gutter-md)));
 
   /* -- FLUID TYPE SCALE (generated) -------------------------------------- */
   /* Fluid type scale. Interpolates 360px -> 1440px (canonical frame). */
@@ -610,6 +677,14 @@
   --text-overline--line-height: 1.4;
   --text-overline--letter-spacing: 0.08em;
   --text-overline--font-weight: 600;
+  /* Decorative-only: the oversized brand watermark in the footer background.
+     Deliberately viewport-relative rather than clamped — it is background
+     art, not a content heading, and must keep tracking the footer's own
+     width rather than the 360-1440 content scale the rest of the type
+     scale interpolates against. */
+  --text-watermark: 16vw;
+  --text-watermark--line-height: 1;
+  --text-watermark--font-weight: 800;
 
   /* -- FLUID SPACING (generated) ----------------------------------------- */
   /* Mobile values are ~53-60% of desktop, per the derivation doctrine in
@@ -645,6 +720,18 @@
     0 24px 40px -8px var(--overlay-5), 0 8px 16px -8px var(--overlay-4);
   --shadow-2xl: 0 32px 64px -12px var(--overlay-6);
   --shadow-hairline: 0 0 0 1px var(--overlay-3);
+  /* Content cards (home feature grid, workflow steps, pricing tiers) are
+     separated from the page by ELEVATION, not by a border — do not pair this
+     with `border-*`. Profile matched against the design: a tight contact
+     shadow at the edge, then a soft downward falloff over ~16-20px. */
+  --shadow-card:
+    0 1px 3px 0 var(--overlay-1), 0 10px 24px -8px var(--overlay-2);
+  /* Eyebrow pills. Elevation rather than a border, same as cards — but a small
+     white pill sits on a near-white section, so unlike a card it needs a
+     defined edge or it washes out. This keeps a hairline SPREAD (still a
+     box-shadow; never pair it with `border-*`) over the soft drop. The design's
+     1px ring measures ~9.4% black, which is what --overlay-2 gives. */
+  --shadow-pill: 0 0 0 1px var(--overlay-2), 0 1px 3px 0 var(--overlay-2);
 
   /* Motion easings. `--ease-*` is a native Tailwind v4 namespace, so these
      generate `ease-standard`, `ease-emphasized`, etc. automatically. */
@@ -753,6 +840,71 @@
 @utility px-safe {
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
+}
+
+/* -----------------------------------------------------------------------------
+   CARD ENTRANCE ANIMATION
+   -----------------------------------------------------------------------------
+   Cards rise and fade in as they scroll into view. Applied via `animate-in-view`.
+
+   NO JAVASCRIPT. This is a scroll-driven CSS animation (`animation-timeline:
+   view()`), so there is no IntersectionObserver, no client component, and no
+   hydration cost — a card inside a Server Component keeps being one. Each card
+   is timed against its own position, so a grid staggers naturally without
+   per-item delays.
+
+   *** READ BEFORE EDITING: THE GUARDS ARE THE POINT. ***
+
+   `opacity: 0` lives INSIDE both `@supports (animation-timeline: view())` and
+   `@media (prefers-reduced-motion: no-preference)`. That ordering is
+   deliberate and non-negotiable:
+
+     - Browser without scroll timelines -> the block never applies -> the card
+       is simply visible. It does NOT sit at opacity 0 forever, which is the
+       classic way scroll animations hide content permanently when their
+       mechanism is unavailable.
+     - Reduced motion -> same: no opacity, no transform, no animation. Note the
+       global `prefers-reduced-motion` rule below cannot rescue us here, since
+       it only shortens durations, and duration is ignored on a scroll-driven
+       animation. Hence the explicit `no-preference` gate.
+
+   Content must never depend on an animation to become visible.
+   -------------------------------------------------------------------------- */
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-in-view {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: card-in linear both;
+      animation-timeline: view();
+      /* Runs while the card crosses into the viewport, finishing before it is
+         centred, so it is settled by the time it is actually being read. */
+      animation-range: entry 5% cover 25%;
+    }
+  }
+}
+
+/* Interactive cards only — a whole-card link. Do NOT add this to a static card:
+   a hover lift promises clickability that is not there. */
+@utility card-lift {
+  transition-property: box-shadow, transform;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 /* =============================================================================

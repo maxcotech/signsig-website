@@ -7,6 +7,7 @@ import { MenuIcon } from "lucide-react";
 
 import { ActionButton } from "@/components/common/action-button";
 import { Logo } from "@/components/common/logo";
+import { MobileNavList } from "@/components/layout/mobile-nav-list";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,16 +16,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { HEADER_CTA, MAIN_NAV } from "@/config/navigation";
+import { SIGN_IN_NAV, SIGN_UP_NAV } from "@/config/navigation";
 
 /**
  * The mobile navigation drawer.
  *
  * DESIGNED ONCE, HERE. No page session should build its own mobile navigation:
  * per the derivation doctrine in docs/RESPONSIVE.md, the horizontal nav bar
- * collapses to this Sheet at `md` and below, on every page. It reads
- * `MAIN_NAV` and `HEADER_CTA` from `src/config/navigation.ts`, so the desktop
- * and mobile navigations physically cannot drift apart.
+ * collapses to this Sheet at `md` and below, on every page. The nav list
+ * (`<MobileNavList>`) and auth actions read `MAIN_NAV`, `SIGN_IN_NAV` and
+ * `SIGN_UP_NAV` from `src/config/navigation.ts`, so the desktop and mobile
+ * navigations physically cannot drift apart.
  *
  * Notes on the implementation, so a future session does not "fix" them:
  * - Radix (via shadcn's Sheet) already handles focus trapping, Escape, aria
@@ -61,26 +63,19 @@ export function MobileNav() {
         </SheetHeader>
 
         <nav aria-label="Main" className="flex-1 overflow-y-auto p-gutter">
-          <ul className="flex flex-col gap-1">
-            {MAIN_NAV.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex h-11 items-center rounded-lg px-3 text-body font-medium text-foreground transition-colors duration-fast hover:bg-muted"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <MobileNavList onNavigate={() => setIsOpen(false)} />
         </nav>
 
-        {/* Pinned to the bottom so it stays within thumb reach. */}
-        <div className="border-t border-border p-gutter">
+        {/* Pinned to the bottom so both actions stay within thumb reach. */}
+        <div className="flex flex-col gap-2 border-t border-border p-gutter">
+          <ActionButton asChild variant="outline" size="lg" className="w-full">
+            <Link href={SIGN_IN_NAV.href} onClick={() => setIsOpen(false)}>
+              {SIGN_IN_NAV.label}
+            </Link>
+          </ActionButton>
           <ActionButton asChild size="lg" className="w-full">
-            <Link href={HEADER_CTA.href} onClick={() => setIsOpen(false)}>
-              {HEADER_CTA.label}
+            <Link href={SIGN_UP_NAV.href} onClick={() => setIsOpen(false)}>
+              {SIGN_UP_NAV.label}
             </Link>
           </ActionButton>
         </div>

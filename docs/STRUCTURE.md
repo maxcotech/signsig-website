@@ -33,6 +33,12 @@ src/
 │       ├── lib/
 │       ├── types.ts
 │       └── <thing>.data.ts       # Colocated static content
+├── content/                      # Long-form transcribed prose. See §1.1.
+│   ├── blocks.ts                 # The ContentBlock vocabulary + TrustPage
+│   ├── legal/                    # Terms, Privacy, Cookie Policy bodies
+│   ├── trust/                    # SOC 2, GDPR, HIPAA, ISO 27001, Sec & Comp
+│   ├── integrations/             # Catalog, category copy, 5 setup guides
+│   └── knowledge-base/           # 8 collections, 52 article titles
 ├── hooks/                        # Global hooks: use-media-query, use-scroll-lock
 ├── lib/
 │   ├── utils.ts                  # cn()
@@ -49,6 +55,26 @@ public/{images,icons,fonts}/
 scripts/                          # check-colors.mjs, check-tokens.mjs
 docs/                             # Governing documents
 ```
+
+### 1.1 `src/content/` — and why it is exempt from the 150-line ceiling
+
+For **long-form prose transcribed from a source document**: legal policies,
+compliance pages, anything where the length is set by the content and not by
+the code. `*.data.ts` colocated in a feature is still correct for short static
+content — nav items, feature lists, a handful of FAQ entries. Reach for
+`src/content/` when the file is measured in thousands of words.
+
+ESLint's `max-lines` covers `src/app`, `src/components` and `src/features`,
+deliberately not this directory. The ceiling is a detector for a _component_
+doing too much. A Privacy Policy is 15 sections because the law has 15 things
+to say about it; splitting it into `privacy-part-2.ts` is §5's forbidden
+remedy with extra steps. What the rule actually protects — the components that
+render this copy — stays well inside the limit.
+
+**Nothing in `src/content/` may import from `src/components` or
+`src/features`.** Content is data; it does not know how it is displayed. When
+a content file needs a shared type, the type is declared in `src/content/` and
+re-exported by the feature — not the other way round, which would be a cycle.
 
 ### Why the home page is in `(marketing)/` and not `app/page.tsx`
 

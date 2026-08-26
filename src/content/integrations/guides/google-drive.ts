@@ -1,0 +1,138 @@
+import type { IntegrationGuide } from "@/content/integrations/types";
+
+/**
+ * Google Drive setup guide — transcribed verbatim from the content document
+ * ("SECTION 3: INTEGRATION GUIDES → GUIDE 2"), 2026-08-26. Not in the design,
+ * which drew only the Microsoft 365 guide.
+ *
+ * Step 3 is a folder tree rather than a bullet list; it uses `block`, so the
+ * indentation survives. See `types.ts`.
+ */
+export const GOOGLE_DRIVE_GUIDE: IntegrationGuide = {
+  title: "Integrate SignSig with Google Drive",
+  purpose:
+    "This guide shows how to send documents stored in Google Drive for signature and automatically save signed documents back to Drive.",
+  prerequisites: [
+    "Google Workspace account",
+    "SignSig account with API access",
+    "Google Drive file sharing enabled for your organization",
+  ],
+  steps: [
+    {
+      title: "Step 1: Connect Your Google Account",
+      items: [
+        "Open your SignSig dashboard",
+        "Go to Integrations > Google Drive",
+        'Click "Connect Google Account"',
+        "Select your Google Workspace account",
+        "Grant SignSig permission to access Drive",
+      ],
+    },
+    {
+      title: "Step 2: Configure Default Folders",
+      items: [
+        "In SignSig settings, go to Google Drive Integration",
+        "Set a default folder for signed documents",
+        "Choose whether to automatically save documents after signing",
+        "Configure sharing permissions for signed documents",
+      ],
+    },
+    {
+      title: "Step 3: Create a Shared Folder Structure",
+      note: "Create folders in Google Drive:",
+      block: [
+        "/SignSig Documents/",
+        "  /Pending Signatures/",
+        "  /Signed Documents/",
+        "  /Templates/",
+      ],
+    },
+    {
+      title: "Step 4: Test the Integration",
+      items: [
+        "Upload a test document to the Pending Signatures folder",
+        'In SignSig, go to "Import from Drive"',
+        "Select the test document",
+        "Send for signature",
+        "Verify the signed document appears in Signed Documents",
+      ],
+    },
+  ],
+  samples: [
+    {
+      intro: "Using the JavaScript SDK to integrate with Google Drive:",
+      lines: [
+        "const SignSig = require('@signsig/sdk');",
+        "const { google } = require('googleapis');",
+        "",
+        "// Initialize SignSig client",
+        "const signsig = new SignSig({",
+        "  apiKey: process.env.SIGNSIG_API_KEY",
+        "});",
+        "",
+        "// Initialize Google Drive client",
+        "const auth = new google.auth.GoogleAuth({",
+        "  keyFile: process.env.GOOGLE_CREDENTIALS,",
+        "  scopes: ['https://www.googleapis.com/auth/drive']",
+        "});",
+        "",
+        "const drive = google.drive({ version: 'v3', auth });",
+        "",
+        "async function sendDocumentFromDrive(fileId, signerEmail) {",
+        "  try {",
+        "    // Get file from Google Drive",
+        "    const driveFile = await drive.files.get({",
+        "      fileId: fileId,",
+        "      alt: 'media'",
+        "    });",
+        "",
+        "    // Create document in SignSig",
+        "    const document = await signsig.documents.create({",
+        "      title: 'Contract from Drive',",
+        "      fileName: driveFile.data.name,",
+        "      signers: [",
+        "        {",
+        "          email: signerEmail,",
+        "          name: 'Client Name'",
+        "        }",
+        "      ]",
+        "    });",
+        "",
+        "    // Add signature fields",
+        "    await signsig.documents.addField(document.id, {",
+        "      type: 'signature',",
+        "      page: 1,",
+        "      x: 100,",
+        "      y: 100,",
+        "      width: 150,",
+        "      height: 50",
+        "    });",
+        "",
+        "    // Send for signature",
+        "    const sent = await signsig.documents.send(document.id, {",
+        "      message: 'Please sign this contract from our Drive.'",
+        "    });",
+        "",
+        "    console.log('Document sent for signature:', sent);",
+        "",
+        "    // Listen for signed event via webhook",
+        "    // When document is signed, download and save to Drive",
+        "    return document;",
+        "  } catch (error) {",
+        "    console.error('Error:', error);",
+        "  }",
+        "}",
+        "",
+        "// Usage",
+        "await sendDocumentFromDrive('google-drive-file-id', 'client@example.com');",
+      ],
+    },
+  ],
+  outcomeIntro: "After setup:",
+  outcomes: [
+    "Documents in Google Drive can be sent for signature without downloading",
+    "Signed documents are automatically uploaded back to Drive",
+    "Version history is maintained in Drive",
+    "Multiple team members can access documents through Drive's sharing",
+  ],
+};

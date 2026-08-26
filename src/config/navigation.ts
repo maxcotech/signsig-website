@@ -5,10 +5,21 @@
  * the desktop nav and the mobile Sheet must never drift apart, and they cannot
  * if there is only one list. Do not hardcode a nav item in a component.
  *
- * COPY STATUS: labels below are PROVISIONAL scaffolding so the chrome renders
- * and can be tested at 360px. Replace them with the exact strings from the
- * design when the first navigation PNG arrives — nav labels are indexed content.
+ * Transcribed from the home page design (2026-08-24) plus the user-supplied
+ * dropdown screenshots for "Solutions", "Developers" and "Download" (same
+ * date) — the original design PNG only showed these nav items closed.
+ *
+ * The Solutions menu is NOT hardcoded here: it is generated from `SOLUTIONS`
+ * in `config/solutions.ts`, which the `[slug]` route and the sitemap also read.
+ * Add a solution there, and the nav, the routes and the page all follow.
  */
+
+import {
+  SOLUTION_GROUP_TITLES,
+  type SolutionGroup,
+  solutionHref,
+  solutionsInGroup,
+} from "@/config/solutions";
 
 export type NavItem = {
   /** Visible label. Must match the design exactly — this is indexed content. */
@@ -21,6 +32,18 @@ export type NavItem = {
   description?: string;
 };
 
+export type NavColumn = {
+  /** Column heading, e.g. "By Use Cases". Omitted for a plain, unlabelled list. */
+  title?: string;
+  items: readonly NavItem[];
+};
+
+/** A primary nav item that opens a mega-menu instead of navigating directly. */
+export type NavMenuItem = {
+  label: string;
+  columns: readonly NavColumn[];
+};
+
 export type NavGroup = {
   /** Group heading. Rendered as a real heading in the footer. */
   title: string;
@@ -28,53 +51,151 @@ export type NavGroup = {
 };
 
 /**
- * Primary navigation. Rendered horizontally at `md` and above, and inside the
- * mobile Sheet below `md`. Keep this to ~5 items; more than that does not
- * survive the collapse to a drawer without becoming a scrolling list.
+ * The Solutions mega-menu, derived from the route registry in
+ * `config/solutions.ts` so the menu can never advertise a page that does not
+ * exist — or omit one that does. Column order follows SOLUTION_GROUP_TITLES.
  */
-export const MAIN_NAV: readonly NavItem[] = [
-  { label: "Product", href: "/#product" },
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "Pricing", href: "/#pricing" },
-  { label: "FAQ", href: "/#faq" },
+const SOLUTIONS_MENU: NavMenuItem = {
+  label: "Solutions",
+  columns: (Object.keys(SOLUTION_GROUP_TITLES) as readonly SolutionGroup[]).map(
+    (group) => ({
+      title: SOLUTION_GROUP_TITLES[group],
+      items: solutionsInGroup(group).map((solution) => ({
+        label: solution.label,
+        href: solutionHref(solution.slug),
+      })),
+    }),
+  ),
+};
+
+/**
+ * Primary navigation. Rendered horizontally at `md` and above, and inside the
+ * mobile Sheet (as expandable accordion groups) below `md`.
+ */
+export const MAIN_NAV: readonly (NavItem | NavMenuItem)[] = [
+  SOLUTIONS_MENU,
+  { label: "Pricing", href: "/pricing" },
+  {
+    label: "Developers",
+    columns: [
+      {
+        items: [
+          { label: "API Documentation", href: "/developers/api-documentation" },
+          { label: "SDKs & Libraries", href: "/developers/sdks-libraries" },
+          { label: "Integration Hub", href: "/developers/integration-hub" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "Download",
+    columns: [
+      {
+        title: "For Android",
+        items: [
+          {
+            label: "Get SignSig app on Play Store",
+            href: "https://play.google.com/store",
+            isExternal: true,
+          },
+        ],
+      },
+      {
+        title: "For iOS",
+        items: [
+          {
+            label: "Get SignSig app on App Store",
+            href: "https://www.apple.com/app-store/",
+            isExternal: true,
+          },
+        ],
+      },
+    ],
+  },
 ] as const;
 
-/**
- * Header call-to-action. Rendered as a button, and pinned to the bottom of the
- * mobile Sheet where it stays reachable with a thumb.
- */
-export const HEADER_CTA: NavItem = {
-  label: "Get started",
-  href: "/#get-started",
-} as const;
+/** Header/mobile-sheet auth actions — "Sign In" (text) and "Sign Up" (button). */
+export const SIGN_IN_NAV: NavItem = { label: "Sign In", href: "/sign-in" };
+export const SIGN_UP_NAV: NavItem = { label: "Sign Up", href: "/sign-up" };
 
 /**
- * Footer columns. Two columns at `md`, stacked at base — per the derivation
- * doctrine in docs/RESPONSIVE.md. If this grows past four groups, switch the
- * mobile treatment to an accordion rather than an ever-longer stack.
+ * Footer columns, five across at `md`+, stacked at base. If this grows past
+ * five groups, switch the mobile treatment to an accordion — see
+ * docs/RESPONSIVE.md.
  */
 export const FOOTER_NAV: readonly NavGroup[] = [
   {
-    title: "Product",
+    title: "Features",
     items: [
-      { label: "Overview", href: "/#product" },
-      { label: "How it works", href: "/#how-it-works" },
-      { label: "Pricing", href: "/#pricing" },
+      { label: "Document Signing", href: "/features/document-signing" },
+      { label: "Workflow Automation", href: "/features/workflow-automation" },
+      {
+        label: "Identity Verification",
+        href: "/features/identity-verification",
+      },
+      { label: "Self-Hosting", href: "/features/self-hosting" },
     ],
   },
   {
-    title: "Company",
+    title: "Developers",
     items: [
-      { label: "About", href: "/#about" },
-      { label: "Contact", href: "/#contact" },
+      { label: "API Documentation", href: "/developers/api-documentation" },
+      { label: "SDKs & Libraries", href: "/developers/sdks-libraries" },
+      { label: "Integration Hub", href: "/developers/integration-hub" },
+    ],
+  },
+  {
+    title: "Legal",
+    items: [
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Security & Compliance", href: "/legal/security-compliance" },
+      { label: "Cookie Policy", href: "/legal/cookie-policy" },
+    ],
+  },
+  {
+    title: "Resources",
+    items: [
+      { label: "Pricing", href: "/pricing" },
+      { label: "System Status", href: "/resources/system-status" },
+      { label: "Careers", href: "/resources/careers" },
+      { label: "Knowledge Base", href: "/resources/knowledge-base" },
+    ],
+  },
+  {
+    title: "Compliance",
+    items: [
+      { label: "SOC 2 Certified", href: "/compliance/soc-2" },
+      { label: "GDPR Compliant", href: "/compliance/gdpr" },
+      { label: "HIPAA Ready", href: "/compliance/hipaa" },
+      { label: "ISO 27001", href: "/compliance/iso-27001" },
     ],
   },
 ] as const;
 
-/**
- * Legal links, rendered in the footer base row.
- */
-export const LEGAL_NAV: readonly NavItem[] = [
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
+/** Footer action row: app store links, LinkedIn, support email. */
+export const FOOTER_ACTIONS: readonly NavItem[] = [
+  {
+    label: "Get On Playstore",
+    href: "https://play.google.com/store",
+    isExternal: true,
+  },
+  {
+    label: "Get On Appstore",
+    href: "https://www.apple.com/app-store/",
+    isExternal: true,
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/signsig",
+    isExternal: true,
+  },
+  { label: "support@signsig.com", href: "mailto:support@signsig.com" },
 ] as const;
+
+/** True for a nav item that opens a mega-menu rather than navigating directly. */
+export function isNavMenuItem(
+  item: NavItem | NavMenuItem,
+): item is NavMenuItem {
+  return "columns" in item;
+}

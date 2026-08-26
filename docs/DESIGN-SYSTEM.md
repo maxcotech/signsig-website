@@ -139,6 +139,31 @@ Neutral is **pure `gray`** (no hue cast) rather than Radix's green-harmonised
 ramp would fight them. If a design's greys turn out to be green-tinted, swapping
 to `sage` is a one-line change per ramp in the primitives block.
 
+### Home page additions (2026-08-24)
+
+One small primitive group, sampled directly from the home page PNG, which does
+not map closely enough to an existing ramp to justify snapping to it:
+
+- `--tint-lavender` / `--tint-rose` / `--tint-mint` (`#f4f4f8` / `#f4eeee` /
+  `#ecf6f1`) — the three pricing-card price-tile backgrounds. Rose and mint
+  are within ~10/255 per channel of `--danger-3` / `--brand-3` but not
+  identical; flagged per docs/DESIGN-TRANSLATION.md rather than silently
+  snapped. Bridged as `--pricing-tile-starter/professional/enterprise`
+  (Layer 2, both `:root` and `.dark` — dark-mode values pick the nearest
+  tinted step in the dark ramp, since the design has no dark comp).
+
+`--orange-9` (`#ffa944`) was added later for the system-status uptime chart:
+the "degraded" bar, bridged as `--status-degraded`. It is oranger than Radix
+`amber` step 9 (`#ffc53d`), so it is a genuinely new value rather than a
+near-miss worth snapping. It completes a three-state set with `--success`
+(operational) and `--destructive` (down), and holds the same value in both
+themes — the amber reads correctly on light and dark, like the brand solid.
+
+A second group, `--code-syntax-*` / `--code-*` (4 syntax-highlight colours),
+existed briefly for a hand-built code preview and was **removed** when that
+component was replaced by the design's own rendered panel as an image. Do not
+re-add them unless a live code block returns.
+
 `--warning-*` is Radix `amber`, a **bright** scale: step 9 needs a **dark**
 foreground, never white. `--warning-foreground` already accounts for this.
 
@@ -241,6 +266,19 @@ four in one class. Never use `text-[42px]`.
 **Body copy never shrinks below 16px.** That is why `text-body` and below are
 fixed rather than fluid.
 
+> ⚠ **Adding a step? Add its key to `TYPE_SCALE` in `src/lib/utils.ts` too.**
+> `tailwind-merge` identifies a `text-*` class by matching the value against
+> Tailwind's built-in font sizes. It does not recognise our custom keys, so an
+> unregistered step is treated as a text **colour** and silently deletes the
+> real colour class merged before it — which is how every `<ActionButton>`
+> shipped with dark text on a green fill. `cn()` registers the scale to
+> prevent it; a step missing from that list reintroduces the bug.
+
+`text-watermark` (`16vw`, weight 800) is a deliberate exception, added for the
+footer's oversized background wordmark: it is decorative background art, not
+a content heading, so it stays viewport-relative rather than clamped against
+the 360–1440 content scale the rest of the type steps interpolate against.
+
 The `clamp()` values were computed, not eyeballed: for a mobile size `M` and a
 desktop size `X`, `slope = (X - M) / (1440 - 360)`, expressed as
 `clamp(M, (M - slope*360) + slope*100vw, X)`.
@@ -273,20 +311,23 @@ text is always readable.
 
 ## 8. Spacing, layout and radius
 
-| Token / utility             | Value              | Use                                                             |
-| --------------------------- | ------------------ | --------------------------------------------------------------- |
-| `--spacing`                 | 0.25rem (4px)      | Base of the numeric scale (`p-4` = 16px)                        |
-| `max-w-content`             | 75rem / **1200px** | **Default page width** — the content column of the 1440px frame |
-| `max-w-narrow`              | 45rem / 720px      | Prose, single-column reading                                    |
-| `max-w-wide`                | 90rem / 1440px     | Full-frame sections                                             |
-| `px-gutter` / `-md` / `-lg` | 16 / 32 / 48px     | Minimum viewport-edge breathing room                            |
-| `py-section-y`              | 64 → 120px         | Standard section rhythm                                         |
-| `py-section-y-sm`           | 40 → 80px          | Compact section                                                 |
-| `py-section-y-lg`           | 88 → 160px         | Hero / feature section                                          |
-| `gap-stack-gap`             | 32 → 48px          | Between major blocks in a section                               |
-| `gap-grid-gap`              | 20 → 32px          | Between cards in a grid                                         |
-| `--radius`                  | 0.75rem (12px)     | shadcn derives `rounded-sm/md/lg/xl/2xl…` from this one value   |
-| `rounded-pill`              | 9999px             | Pills and fully-round chips                                     |
+| Token / utility             | Value                         | Use                                                                                                                                                                                                                                                                  |
+| --------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--spacing`                 | 0.25rem (4px)                 | Base of the numeric scale (`p-4` = 16px)                                                                                                                                                                                                                             |
+| `max-w-content`             | 75rem / **1200px**            | **Default page width** — the content column of the 1440px frame                                                                                                                                                                                                      |
+| `max-w-narrow`              | 45rem / 720px                 | Prose, single-column reading                                                                                                                                                                                                                                         |
+| `max-w-cards`               | 65rem / 1040px                | A 3-up card grid inset from the content column (SDKs page). Measured 1038px — three 319px cards with 41px gaps. Neither `content` (16% wider) nor `compact` (20% narrower) was close enough to reuse                                                                 |
+| `max-w-compact`             | 52rem / 832px                 | A centred measure narrower than the content column, for a secondary 2-up grid that would look stranded at full width (solutions-page benefit grid). Measured 822px in the design; rounded to a clean 52rem — a 1.2% difference, flagged rather than snapped silently |
+| `max-w-wide`                | 90rem / 1440px                | Full-frame sections                                                                                                                                                                                                                                                  |
+| `max-w-menu`                | `min(44rem, 100vw − gutters)` | Header mega-menu panel. Viewport-aware on purpose: the panel is absolutely positioned under its trigger, so a fixed width would run off the right edge on a narrow desktop — this lets the columns wrap instead                                                      |
+| `px-gutter` / `-md` / `-lg` | 16 / 32 / 48px                | Minimum viewport-edge breathing room                                                                                                                                                                                                                                 |
+| `py-section-y`              | 64 → 120px                    | Standard section rhythm                                                                                                                                                                                                                                              |
+| `py-section-y-sm`           | 40 → 80px                     | Compact section                                                                                                                                                                                                                                                      |
+| `py-section-y-lg`           | 88 → 160px                    | Hero / feature section                                                                                                                                                                                                                                               |
+| `gap-stack-gap`             | 32 → 48px                     | Between major blocks in a section                                                                                                                                                                                                                                    |
+| `gap-grid-gap`              | 20 → 32px                     | Between cards in a grid                                                                                                                                                                                                                                              |
+| `--radius`                  | 0.75rem (12px)                | shadcn derives `rounded-sm/md/lg/xl/2xl…` from this one value                                                                                                                                                                                                        |
+| `rounded-pill`              | 9999px                        | Pills and fully-round chips                                                                                                                                                                                                                                          |
 
 `--radius` is **provisional** — confirm it against the first design that shows a
 card. Changing that single value rescales the whole radius set coherently.
@@ -301,6 +342,13 @@ write `max-w-[1200px]` or `px-[120px]`.
 Built from the overlay alpha ramp, not raw `rgba()`:
 `shadow-xs`, `shadow-sm`, `shadow-md`, `shadow-lg`, `shadow-xl`, `shadow-2xl`,
 plus `shadow-hairline` (a 1px ring for card borders that must not affect layout).
+
+`shadow-card` is the standard treatment for a **content card** (home feature
+grid, workflow steps, pricing tiers): a tight contact shadow plus a soft
+downward falloff, profiled against the design. Cards are separated from the
+page by **elevation, not by a border** — never pair `shadow-card` with a
+`border-*`, and do not reintroduce `shadow-hairline` alongside it. See
+docs/DECISIONS.md.
 
 ---
 
@@ -341,6 +389,37 @@ Need a new layer? **Add a named one here.** Never invent a value inline.
 `duration-[437ms]` is a rule violation. `--ease-*` is a native Tailwind
 namespace so those utilities are generated automatically; the durations are
 explicit `@utility` declarations for the same reason as the z-index scale.
+
+### Card entrance animation
+
+`animate-in-view` fades and rises a card as it scrolls into view, and
+`card-lift` raises an interactive card on hover.
+
+**No JavaScript.** It is a scroll-driven CSS animation (`animation-timeline:
+view()`), so there is no IntersectionObserver, no client component and no
+hydration cost — a card in a Server Component stays one. Each card is timed
+against its own position, so grids stagger naturally with no per-item delays.
+
+The whole rule sits inside **two guards**, and that is the load-bearing part:
+
+```css
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) { .animate-in-view { … } }
+}
+```
+
+A browser without scroll timelines, or a visitor who has asked for less
+motion, never gets the rule at all — so the card is simply visible. It never
+sits at `opacity: 0` waiting for a mechanism that is not there, which is the
+usual way scroll animations hide content permanently. **Content must never
+depend on an animation to become visible.**
+
+Note the global reduced-motion rule below cannot cover this case on its own:
+it only shortens durations, and duration is ignored on a scroll-driven
+animation. Hence the explicit `no-preference` gate.
+
+⚠ `card-lift` belongs **only** on a card that is itself a link. On a static
+card a hover lift promises clickability that is not there.
 
 **`prefers-reduced-motion: reduce` is honoured globally** in the base layer:
 animations and transitions are neutralised for those users without any component

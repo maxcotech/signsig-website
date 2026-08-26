@@ -1,80 +1,60 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/utils";
 
 /**
- * The SignSig logo: a brand mark plus the wordmark.
+ * The SignSig logo — mark plus wordmark, as one lockup.
  *
- * PLACEHOLDER GEOMETRY. The mark below is a token-coloured stand-in so the
- * header and footer render and can be tested. When the real logo arrives,
- * replace the SVG paths in `<LogoMark>` only — every consumer keeps working.
+ * Extracted from the design PNG and un-composited to a transparent alpha
+ * channel, so it sits correctly on any surface (verified against white, tinted
+ * and near-black backgrounds).
  *
- * The mark inherits `currentColor`, so it themes itself: `text-primary` gives
- * the brand green, and it flips correctly in dark mode because `--primary`
- * flips. Do not hardcode a fill.
+ * The logo always renders in its default brand green, including on the dark
+ * footer band and in dark mode — a brand mark should not change colour with
+ * the theme. Do not reintroduce a light/dark variant swap here.
+ *
+ * ⚠ This is a RASTER asset lifted from a screenshot. It is accurate but will
+ * not stay crisp at very large sizes and cannot be recoloured. Swap the file
+ * for a real SVG when the brand assets arrive — every consumer of `<Logo>`
+ * keeps working. See docs/DECISIONS.md.
  */
 
-export type LogoMarkProps = {
-  className?: string;
-};
+/** Intrinsic size of the logo file. */
+const LOGO_SIZE = { width: 173, height: 56 } as const;
 
-/** The mark on its own, for favicons, OG images and tight spaces. */
-export function LogoMark({ className }: LogoMarkProps) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-      className={cn("size-8 shrink-0", className)}
-    >
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <path
-        d="M8 20.5c3.2 0 5.2-2.4 6.6-5.6 1-2.3 1.7-4.4 2.7-4.4.8 0 1.1.7 1.1 1.9 0 2.6-1.6 5.3-1.6 7.2 0 .9.4 1.4 1.2 1.4 1.3 0 2.6-1.3 3.6-2.9"
-        stroke="var(--primary-foreground)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+/** Rendered height; width follows from the intrinsic aspect ratio. */
+const RENDERED_HEIGHT = 32;
+const RENDERED_WIDTH = Math.round(
+  (LOGO_SIZE.width / LOGO_SIZE.height) * RENDERED_HEIGHT,
+);
 
 export type LogoProps = {
   className?: string;
-  /** Hide the wordmark, leaving only the mark. Useful in a collapsed header. */
-  isMarkOnly?: boolean;
   /**
    * Render as a link to the home page. Default true. Set false when the logo
-   * already sits inside a link, or on the home page hero where it is decorative.
+   * already sits inside a link, or where it is decorative.
    */
   isLink?: boolean;
 };
 
-export function Logo({
-  className,
-  isMarkOnly = false,
-  isLink = true,
-}: LogoProps) {
-  const content = (
-    <>
-      <LogoMark className="text-primary" />
-      {!isMarkOnly && (
-        <span className="text-h5 font-semibold tracking-tight">
-          {SITE.name}
-        </span>
-      )}
-    </>
+export function Logo({ className, isLink = true }: LogoProps) {
+  const image = (
+    <Image
+      src="/images/signsig-logo.png"
+      alt={SITE.name}
+      width={RENDERED_WIDTH}
+      height={RENDERED_HEIGHT}
+      priority
+      className="h-8 w-auto"
+    />
   );
 
-  const classes = cn(
-    "inline-flex items-center gap-2 rounded-md text-foreground",
-    className,
-  );
+  const classes = cn("inline-flex items-center", className);
 
   if (!isLink) {
-    return <span className={classes}>{content}</span>;
+    return <span className={classes}>{image}</span>;
   }
 
   return (
@@ -82,11 +62,10 @@ export function Logo({
       href="/"
       className={cn(
         classes,
-        "transition-colors duration-fast hover:opacity-90",
+        "transition-opacity duration-fast hover:opacity-90",
       )}
-      aria-label={`${SITE.name} — home`}
     >
-      {content}
+      {image}
     </Link>
   );
 }

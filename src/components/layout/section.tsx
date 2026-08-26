@@ -21,6 +21,25 @@ import { cn } from "@/lib/utils";
  * to REPLACE the token, and use the `spacing="none"` variant when you do. A
  * `py-*` in `className` alongside the default `spacing` produces two competing
  * padding rules — the classic "fine on desktop, broken at 768" bug.
+ *
+ * ⚠ `className` vs `containerClassName` — THE ONE THAT BITES.
+ *
+ * `className` goes on the outer `<section>`, whose ONLY child is the
+ * `<Container>`. `children` are inside that container. So layout classes meant
+ * for the content must go on `containerClassName`:
+ *
+ *   ❌ <Section className="flex flex-col items-center text-center">
+ *   ✅ <Section containerClassName="flex flex-col items-center text-center">
+ *
+ * The wrong one fails QUIETLY. `items-center` on the section centres its lone
+ * full-width container — a no-op — while `text-center` still inherits down, so
+ * unconstrained children look correct. Only a child with a `max-w-*` shows the
+ * bug: its box sits flush left with its text centred inside it, reading as
+ * "the paragraph is off-centre but the heading isn't". Fixed 2026-08-26; see
+ * docs/DECISIONS.md.
+ *
+ * Use `className` for the section's own concerns: background, id, spacing
+ * override, `relative` stacking.
  */
 
 const SECTION_SPACING = {

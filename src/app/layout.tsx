@@ -87,10 +87,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     // suppressHydrationWarning is required by next-themes: it writes the theme
     // class onto <html> before React hydrates, to avoid a flash of the wrong
     // theme. Without this attribute React logs a mismatch on every page load.
-    <html lang={SITE.lang} suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${geistMono.variable} flex min-h-dvh flex-col`}
-      >
+    // The font variables MUST be on <html>, not <body>: globals.css applies
+    // `font-sans` to the html element, and custom properties inherit downward
+    // only. Defined on body, `var(--font-inter)` is undefined at html scope,
+    // which invalidates the whole font-family declaration and silently drops
+    // the page to the browser's default serif. See docs/DECISIONS.md.
+    <html
+      lang={SITE.lang}
+      className={`${inter.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="flex min-h-dvh flex-col">
         <ThemeProvider>
           <SkipLink />
           <Header />

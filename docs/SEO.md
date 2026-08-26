@@ -107,7 +107,8 @@ Tick every line before declaring the page done.
 - [ ] **Exactly one `<h1>`** per page; heading levels descend without skipping
       (no `h2` → `h4`).
 - [ ] Semantic landmarks: `<header> <nav> <main> <section> <article> <aside>
-    <footer>`. **A `<div>` is a last resort, not a default.**
+
+<footer>`. **A `<div>` is a last resort, not a default.**
 - [ ] Each `<section>` that is a landmark has an accessible name
       (`aria-labelledby` pointing at its heading id).
 - [ ] All images via `next/image`, with a **real `alt`** (`alt=""` **only** for
