@@ -368,9 +368,20 @@ source files. See `solution-icons.tsx` and docs/DECISIONS.md.
 > feature directory for a Solutions page.
 
 `<SolutionHero>` is still **not** `<HomeHero>` with props: it sits on the plain
-page background rather than a tinted panel, and has one CTA with no secondary
+page background, where `<HomeHero>` is an **inset rounded panel** —
+`rounded-panel bg-surface-2` on a box inside the section, with the section
+reduced to the white margin around it. It also has one CTA with no secondary
 button and no trial line. `<BenefitGrid>` uses `max-w-compact` (52rem), the
 inset measure the design gives it.
+
+**Card illustrations sit in a FIXED STAGE.** `<FeatureCard>` and
+`<WorkflowStepCard>` wrap the image in a box with a fixed `aspect-ratio`
+(`FEATURE_STAGE`, `STEP_STAGE`) and fit the artwork with `object-contain`.
+The files are all different sizes, so without this every card renders a
+different image height and the titles fall out of line. Padding goes on the
+stage, not the image: `fill` resolves against the padding box and would ignore
+it, hence the inner `relative h-full w-full` wrapper. Never pass a stage
+constant to `next/image` as a file's intrinsic size — that was the original bug.
 
 **All illustrations are real design assets, not code.** They were extracted
 from the source PNG into `public/images/home/` (see that folder's README for

@@ -3,19 +3,31 @@
  * from the design, including its inconsistent trailing punctuation (steps 2
  * and 3 end without a period in the source).
  *
- * `image` is the step's mockup, extracted from the design at 633x248 (see
- * public/images/README.md).
+ * `image` is the step's mockup. Same trap as the feature cards: the three
+ * exports are cropped tight to their artwork and are NOT the same size —
+ * 436x96, 565x179 and 670x188, ratios 4.54 / 3.16 / 3.56. STEP_STAGE is what
+ * keeps the three cards aligned.
  */
 export type WorkflowStepData = {
   id: string;
   title: string;
   description: string;
-  /** Filename inside /images/home/. Every step image is 633x248. */
+  /** Filename inside /images/home/. Sizes vary — see STEP_STAGE. */
   image: string;
 };
 
-/** Intrinsic size of every workflow-step mockup, for next/image. */
-export const STEP_IMAGE_SIZE = { width: 633, height: 248 } as const;
+/**
+ * The mockup STAGE — the fixed box every step image is fitted into. NOT the
+ * files' intrinsic size; all three differ.
+ *
+ * 633x248 is the design's stage, kept from the original transcription and
+ * corroborated by re-measuring Home.png: the cards are 610 design px wide and
+ * the artwork centres on a stage of roughly 236 design px, i.e. a ratio of
+ * ~2.59 against this constant's 2.55. It was previously handed to next/image
+ * as each file's real size, which it never was, so the rendered heights came
+ * from the files' own ratios and the three cards did not line up.
+ */
+export const STEP_STAGE = { width: 633, height: 248 } as const;
 
 export const WORKFLOW_STEPS: readonly WorkflowStepData[] = [
   {

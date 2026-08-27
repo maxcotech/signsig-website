@@ -16,6 +16,27 @@ visibly wrong. See `docs/DECISIONS.md`.
 
 Filenames match the card title they belong to.
 
+> **UPDATED 2026-08-26 — the files no longer match the crop rects below.**
+>
+> They have been **re-exported from Figma with transparent backgrounds**, which
+> was the outstanding request from the dark-mode work, and each was cropped
+> tight to its own artwork. So their sizes now vary (804×622 … 1196×384 for the
+> cards; 436×96 … 670×188 for the steps) instead of all being the stage size.
+>
+> Two consequences:
+>
+> 1. **Transparency is done.** `FeatureCard` and `WorkflowStepCard` put the
+>    colour behind the artwork (`bg-surface-2` / `bg-card`), so the PNGs
+>    inherit the surface in both themes. Nothing needs a dark variant.
+> 2. **Never pass a file's size to `next/image` from a shared constant.** Doing
+>    exactly that is what broke card alignment: the constants described the
+>    stage, the files were all different, and each card rendered a different
+>    height. The components now fix the stage with `aspect-ratio` and fit the
+>    artwork with `object-contain`. See `FEATURE_STAGE` / `STEP_STAGE`.
+>
+> The rects below are kept as the record of where each illustration came from
+> in the source design — not as a claim about the files on disk.
+
 | File                              | Source rect in `Home.png` `[x, y, w, h]` |
 | --------------------------------- | ---------------------------------------- |
 | `document-signing.png`            | `[143, 1945, 1112, 467]`                 |

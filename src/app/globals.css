@@ -111,6 +111,11 @@
   /* NEUTRAL — Radix `gray`. Pure neutral, no hue cast, so it will not fight greys sampled from Figma. */
   /* radix:gray */
   --neutral-1: oklch(0.9911 0 0); /* #fcfcfc */
+  /* Half-step Radix does not ship. MEASURED from the design PNGs: every
+     subtle surface in them is #fbfbfb (hero panel, feature-card image
+     stages, pricing cards, FAQ band). #f9f9f9 appears nowhere. Verified by
+     sampling the modal background colour of every band down Home.png. */
+  --neutral-1-5: oklch(0.9881 0 0); /* #fbfbfb */
   --neutral-2: oklch(0.9821 0 0); /* #f9f9f9 */
   --neutral-3: oklch(0.9551 0 0); /* #f0f0f0 */
   --neutral-4: oklch(0.931 0 0); /* #e8e8e8 */
@@ -291,7 +296,7 @@
 
   /* Surface elevation. Use these for stacked panels; higher = closer to user. */
   --surface-1: var(--white);
-  --surface-2: var(--neutral-2);
+  --surface-2: var(--neutral-1-5);
   --surface-3: var(--neutral-3);
 
   --card: var(--white);
@@ -709,6 +714,12 @@
   /* Radius. shadcn derives its sm/md/lg/xl steps from --radius (set in :root
      below), so changing that one value rescales the whole set coherently. */
   --radius-pill: 9999px;
+  /* 32px — the hero's inset panel. MEASURED off Home.png: the panel colour
+     reaches its left edge 58px below the top edge at the 2560px export
+     scale, i.e. a 32.6px radius at 1440. Bigger than anything the shadcn
+     --radius scale derives, so it is its own token rather than an
+     arbitrary rounded-[32px]. */
+  --radius-panel: 2rem;
 
   /* Shadows, built from the overlay alpha ramp rather than raw rgba(). */
   --shadow-xs: 0 1px 2px 0 var(--overlay-2);

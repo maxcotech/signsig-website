@@ -2,21 +2,34 @@
  * The 8-card "Purposefully Built To Replace Manual Paperwork" grid.
  * Copy transcribed verbatim from the design.
  *
- * `image` is the card's illustration, extracted from the design at 1112x467
- * (see public/images/README.md). The illustrations are product mockups that
- * restate the adjacent title and description, so they carry `alt=""` — see
- * docs/DECISIONS.md.
+ * `image` is the card's illustration. The illustrations are product mockups
+ * that restate the adjacent title and description, so they carry `alt=""` —
+ * see docs/DECISIONS.md.
+ *
+ * ⚠ THE ILLUSTRATIONS ARE NOT ALL THE SAME SIZE. They were exported cropped
+ * tight to their artwork, so their intrinsic ratios run from 1.29
+ * (document-signing, 804x622) to 3.24 (workflow-automation, 880x272) — a 2.5x
+ * spread. The stage below is what makes the cards line up; see FEATURE_STAGE.
  */
 export type FeatureCardData = {
   id: string;
   title: string;
   description: string;
-  /** Filename inside /images/home/. Every card image is 1112x467. */
+  /** Filename inside /images/home/. Sizes vary — see FEATURE_STAGE. */
   image: string;
 };
 
-/** Intrinsic size of every feature-card illustration, for next/image. */
-export const FEATURE_IMAGE_SIZE = { width: 1112, height: 467 } as const;
+/**
+ * The illustration STAGE — the fixed box every card image is fitted into.
+ * NOT the images' intrinsic size; they all differ.
+ *
+ * Measured off Home.png: the stage is 1112x454 at the design's 2560px export
+ * scale (625.5x255.4 css), and 454 recurs exactly on all three grid rows. The
+ * previous value here said 467 and, worse, was passed to next/image as though
+ * it were each file's real size — so the rendered height came from the file's
+ * own ratio instead and every card ended up a different height.
+ */
+export const FEATURE_STAGE = { width: 1112, height: 454 } as const;
 
 export const FEATURE_CARDS: readonly FeatureCardData[] = [
   {

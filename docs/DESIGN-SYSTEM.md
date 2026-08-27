@@ -123,21 +123,40 @@ repository where a raw colour literal may appear.** Primitives **do not flip**
 between light and dark: a primitive name always means exactly one colour, and
 the dark ramps are separate tokens.
 
-| Ramp        | Tokens                                    | Source                        |
-| ----------- | ----------------------------------------- | ----------------------------- |
-| Brand       | `--brand-1..12`, `--brand-dark-1..12`     | Radix `green` / `greenDark`   |
-| Brand alpha | `--brand-a-1..12`, `--brand-dark-a-1..12` | Radix `greenA` / `greenDarkA` |
-| Neutral     | `--neutral-1..12`, `--neutral-dark-1..12` | Radix `gray` / `grayDark`     |
-| Danger      | `--danger-1..12`, `--danger-dark-1..12`   | Radix `red` / `redDark`       |
-| Warning     | `--warning-1..12`, `--warning-dark-1..12` | Radix `amber` / `amberDark`   |
-| Info        | `--info-1..12`, `--info-dark-1..12`       | Radix `blue` / `blueDark`     |
-| Overlay     | `--overlay-1..12`, `--overlay-dark-1..12` | Radix `blackA` / `whiteA`     |
-| Anchors     | `--white`, `--black`                      | Absolute                      |
+| Ramp        | Tokens                                    | Source                              |
+| ----------- | ----------------------------------------- | ----------------------------------- |
+| Brand       | `--brand-1..12`, `--brand-dark-1..12`     | Radix `green` / `greenDark`         |
+| Brand alpha | `--brand-a-1..12`, `--brand-dark-a-1..12` | Radix `greenA` / `greenDarkA`       |
+| Neutral     | `--neutral-1..12`, `--neutral-dark-1..12` | Radix `gray` / `grayDark`           |
+| Neutral ½   | `--neutral-1-5`                           | **Measured, not Radix** — see below |
+| Danger      | `--danger-1..12`, `--danger-dark-1..12`   | Radix `red` / `redDark`             |
+| Warning     | `--warning-1..12`, `--warning-dark-1..12` | Radix `amber` / `amberDark`         |
+| Info        | `--info-1..12`, `--info-dark-1..12`       | Radix `blue` / `blueDark`           |
+| Overlay     | `--overlay-1..12`, `--overlay-dark-1..12` | Radix `blackA` / `whiteA`           |
+| Anchors     | `--white`, `--black`                      | Absolute                            |
 
 Neutral is **pure `gray`** (no hue cast) rather than Radix's green-harmonised
 `sage`, deliberately: greys sampled from Figma are usually neutral, and a tinted
 ramp would fight them. If a design's greys turn out to be green-tinted, swapping
 to `sage` is a one-line change per ramp in the primitives block.
+
+### `--neutral-1-5`: the half-step Radix does not ship (2026-08-26)
+
+Radix `gray` jumps from step 1 to step 2 with nothing between. The design's
+subtle surface sits in that gap, so the ramp needed a half-step rather than a
+component needing a hex code — the escape hatch in AGENTS.md §3, applied as
+written.
+
+It was **measured, not guessed**: sampling the modal background colour of
+every horizontal band down `Home.png` returns the same value for the hero
+panel, the feature-card image stages, the workflow cards, the pricing cards
+and the FAQ band. Radix step 2 appears nowhere in the design. `--surface-2`
+therefore points at `--neutral-1-5` in light mode; dark mode is unchanged and
+still uses `--neutral-dark-2`.
+
+Naming is positional on purpose. A role name like `--surface-subtle` would be
+a Layer 2 name on a Layer 1 token; `1-5` says exactly what it is — a step
+between 1 and 2.
 
 ### Home page additions (2026-08-24)
 
@@ -176,7 +195,7 @@ with zero patching — **do not rename them.**
 | Group         | Tokens                                                                                                                                                              |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Page          | `--background`, `--foreground`                                                                                                                                      |
-| Surfaces      | `--surface-1`, `--surface-2`, `--surface-3`                                                                                                                         |
+| Surfaces      | `--surface-1`, `--surface-2` (= `--neutral-1-5`), `--surface-3`                                                                                                     |
 | Cards         | `--card`, `--card-foreground`, `--popover`, `--popover-foreground`                                                                                                  |
 | Brand         | `--primary`, `--primary-foreground`, `--primary-hover`, `--primary-active`, `--primary-subtle`, `--primary-subtle-foreground`, `--primary-text`, `--primary-border` |
 | Neutral roles | `--secondary`, `--secondary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`                                                         |

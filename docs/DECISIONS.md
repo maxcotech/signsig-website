@@ -1952,3 +1952,156 @@ well-documented."). `text-pretty` only prevents single-word orphans;
 centred blocks under a heading. Applied to the custom-integrations description
 and both pricing leads. Longer left-aligned prose keeps `text-pretty`, which is
 the right tool there.
+
+---
+
+## 2026-08-26 — The subtle surface is `#fbfbfb`, and card image stages are fixed
+
+Two reports off the running site: the hero band was the wrong grey, and the
+home-page cards did not line up.
+
+### 1. `--surface-2` was one step too dark
+
+Reported as "this section has a different bg color #FBFBFB". Rather than patch
+the hero, I sampled the modal background colour of **every horizontal band down
+`Home.png`**. The result is unambiguous:
+
+| Colour          | Where                                                                          |
+| --------------- | ------------------------------------------------------------------------------ |
+| `#ffffff`       | page background, feature-card bodies                                           |
+| the subtle grey | hero panel, feature-card image stages, workflow cards, pricing cards, FAQ band |
+
+The subtle grey is the same value everywhere, and Radix `gray.2` — what
+`--surface-2` pointed at — **appears nowhere in the design**. So this was never
+a hero-specific tweak; the whole subtle-surface role was off by one step.
+
+Radix `gray` has no step between 1 and 2, so the ramp gained `--neutral-1-5`
+(AGENTS.md §3: a colour in the design that is not in the token system means the
+token system is incomplete). Its OKLCH lightness was derived with the sRGB→OKLab
+transform and checked against the ramp's existing entries, which it reproduces
+exactly; the built CSS confirms it compiles to the intended value. `--surface-2`
+now points at it in light mode. Dark mode is untouched.
+
+### 2. Card image stages: a constant that lied
+
+`FEATURE_IMAGE_SIZE = {1112, 467}` and `STEP_IMAGE_SIZE = {633, 248}` were
+documented as "every card image is 1112x467" / "every step image is 633x248".
+Neither was true. The real files:
+
+| Feature cards | ratio |     | Step cards | ratio |
+| ------------- | ----- | --- | ---------- | ----- |
+| 804×622       | 1.29  |     | 436×96     | 4.54  |
+| 880×272       | 3.24  |     | 565×179    | 3.16  |
+| 617×427       | 1.45  |     | 670×188    | 3.56  |
+| … 1196×384    | 3.12  |     |            |       |
+
+Those constants were handed to `next/image` as each file's intrinsic size. With
+`className="w-full"` the browser derives height from the file's **actual**
+ratio, not the declared one — so every card got a different image height and
+the titles fell out of line across the grid. The constants were decorative.
+
+**Fix:** the constants now describe the **stage** — the fixed box the artwork is
+fitted into — and actually drive it, via `aspect-ratio` on a wrapper with
+`<Image fill className="object-contain" />` inside.
+
+`FEATURE_STAGE` was corrected to **1112×454**, measured off `Home.png`: 454
+recurs exactly on all three grid rows. `STEP_STAGE` keeps 633×248; re-measuring
+the design gives ~610×236 design px for that stage, a ratio of 2.59 against the
+constant's 2.55 — inside measurement noise, so the original transcription
+stands.
+
+**`contain`, not `cover`.** These are UI mockups. Cropping document-signing
+(1.29) into a 2.45 stage would cut away nearly half the interface. Contain shows
+all of it and letterboxes instead.
+
+The aspect ratio is set with an inline `style` rather than `aspect-[1112/454]`
+so the number has one source of truth shared with the `sizes` budget. That is
+not an arbitrary-value escape: `aspect-ratio` is not one of the tokenised
+categories, and duplicating the ratio into a class string is exactly the drift
+that caused this bug.
+
+### 3. The illustrations are already transparent
+
+Checked while choosing the fit: **all eleven PNGs have `alpha = 0` at every
+corner.** The transparent Figma re-exports requested during the dark-mode work
+have landed. So the letterboxing `object-contain` introduces is invisible — the
+stage colour shows through the gap and through the artwork's own ground alike,
+and both follow the theme into dark mode. No dark variants are needed, and
+`public/images/README.md` has been corrected: it still described the old
+flattened crops.
+
+### Not changed — reported instead
+
+Measured while investigating, outside what was asked:
+
+- **The hero is an inset rounded panel in the design, not a full-bleed band.**
+  It spans x 130–2429 of 2560 (≈73px side margins at 1440), is ~498px tall, and
+  has a corner radius of roughly 34px. We render it edge to edge.
+- **The hero panel carries a faint grid.** 1px lines at the subtle-grey-on-white
+  boundary, every 320 design px (180 css). We render none.
+- **Workflow card bodies are the subtle grey in the design, not white.** Their
+  stage and body are one colour there; ours are both `bg-card`, so they are
+  still internally consistent and the letterboxing stays invisible — but the
+  card reads white where the design reads grey.
+
+---
+
+## 2026-08-26 (later) — The hero is an inset panel, and card images get padding
+
+Two follow-ups to the entry above, both from the user pointing at the running
+site.
+
+### The tint belongs to the panel, not the section
+
+The earlier entry listed "the hero is an inset rounded panel in the design, not
+a full-bleed band" under _reported, not changed_. The user then clarified that
+**the highlighted box** — the container-width region, not the full-width band —
+is the one that should carry the colour. That is the same finding, so it is now
+implemented.
+
+Measured off `Home.png`, all at the 1440 frame:
+
+|               |                                                                                  |
+| ------------- | -------------------------------------------------------------------------------- |
+| Panel box     | x 73.1 → 1366.9 (**1293.7 wide**), y 151.9 → 650.2 (**498.4 tall**)              |
+| Corner radius | **32.6px** — panel colour reaches the left edge 58px below the top at 2560 scale |
+| White margin  | **51.7px** above, **56.2px** below                                               |
+
+Three consequences for the markup:
+
+1. **No background on the `<section>`.** It moved to a `rounded-panel
+bg-surface-2` box inside.
+2. **`container={false}`.** A `<Container>`'s gutters are _padding_, so with the
+   background on the container the panel would sit flush against the viewport
+   edge below 1200px. The section now supplies the gutters as margin and the
+   panel is a `max-w-content` box inside them.
+3. **`spacing="none"` plus `py-8 md:py-14`.** The old `spacing="lg"` was 160px
+   at 1440 — correct for a full-bleed band, four times too much as a margin
+   around a panel. 56px matches the measured 52/56.
+
+`--radius-panel: 2rem` is a new token rather than `rounded-[32px]`: radius is
+tokenised (AGENTS.md §3), and nothing the shadcn `--radius` scale derives comes
+close to 32px.
+
+**Width deliberately not matched.** The design's panel is 1293.7px; this renders
+it at `max-w-content` (1200) so the hero occupies the same footprint as every
+other section's container. The design's whole content column measures ~1294 —
+the feature grid sits on the same 130..2430 frame — so closing that 94px gap is
+a site-wide container decision, not a hero one. Left open.
+
+### Padding inside the card image stages
+
+Requested. Measuring first: in the design the mockups **bleed to the stage
+edges** — sampling the artwork bounds inside each stage returns zero clearance.
+But the PNGs were re-exported cropped tight to their visible artwork, so with
+`object-contain` they now butt against the edge rather than fading into it.
+
+The stage padding matches each card's own body padding — `p-6` on feature
+cards, `p-5` on step cards — so the illustration's optical edge lines up with
+the title beneath it.
+
+**The padding goes on the stage, not the image.** `fill` resolves against the
+containing block's _padding box_, so padding on the same element is ignored
+entirely. Hence the inner `relative h-full w-full` wrapper: the outer box keeps
+the fixed `aspect-ratio` (which applies to the border box, so the cards stay
+aligned) and the inner box is what the image actually fills.
