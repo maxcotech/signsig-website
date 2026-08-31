@@ -1,10 +1,9 @@
 "use client";
 
 import {
-  DESIRED_ROLES,
-  EXPERIENCE_BANDS,
-  NOTICE_PERIODS,
-} from "@/features/careers/application/application.data";
+  EXPERIENCE_OPTIONS,
+  NOTICE_PERIOD_OPTIONS,
+} from "@/features/careers/application/careers-application.api";
 import {
   Field,
   SelectField,
@@ -12,25 +11,24 @@ import {
 } from "@/features/careers/application/components/field";
 import type { ApplicationDraft } from "@/features/careers/application/types";
 
-/**
- * "Desired Role" is the content document's five JOB FAMILIES, not the list of
- * currently-open roles. That is deliberate: a candidate applies to an area,
- * and the specific opening they came from is already known from the route.
- * It also means the dropdown does not empty out when a posting closes.
- */
-const ROLE_OPTIONS = DESIRED_ROLES.map((role) => ({
-  value: role,
-  label: role,
+const NOTICE_PERIOD_SELECT = NOTICE_PERIOD_OPTIONS.map((option) => ({
+  value: String(option.value),
+  label: option.label,
 }));
 
-const toOptions = (values: readonly string[]) =>
-  values.map((value) => ({ value, label: value }));
+const EXPERIENCE_SELECT = EXPERIENCE_OPTIONS.map((option) => ({
+  value: String(option.value),
+  label: option.label,
+}));
 
 /**
  * Step 2 — Professional Info.
  *
- * All three option sets now come from the content document rather than being
- * inferred from a closed dropdown in the design. See application.data.ts.
+ * No "Desired Role" field, unlike the earlier UI-only version: the real Apply
+ * endpoint has no such field, and applying against a specific posting already
+ * says which role this is. See `careers-application.api.ts` for where Notice
+ * Period and Years of Experience now come from, and the warning on their
+ * option labels — real enum values, unconfirmed labels.
  */
 export function StepProfessionalInfo({
   draft,
@@ -68,39 +66,31 @@ export function StepProfessionalInfo({
       </Field>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label="Desired Role" htmlFor="desiredRole" required>
-          <SelectField
-            id="desiredRole"
-            value={draft.desiredRole}
-            onChange={(v) => update({ desiredRole: v })}
-            placeholder="Select"
-            options={ROLE_OPTIONS}
-            required
-          />
-        </Field>
         <Field label="Notice Period" htmlFor="noticePeriod" required>
           <SelectField
             id="noticePeriod"
             value={draft.noticePeriod}
             onChange={(v) => update({ noticePeriod: v })}
             placeholder="Select"
-            options={toOptions(NOTICE_PERIODS)}
+            options={NOTICE_PERIOD_SELECT}
+            required
+          />
+        </Field>
+        <Field
+          label="Years of Relevant Experience"
+          htmlFor="experience"
+          required
+        >
+          <SelectField
+            id="experience"
+            value={draft.experience}
+            onChange={(v) => update({ experience: v })}
+            placeholder="Select"
+            options={EXPERIENCE_SELECT}
             required
           />
         </Field>
       </div>
-
-      {/* Full width in the design, unlike the paired row above it. */}
-      <Field label="Years of Relevant Experience" htmlFor="experience" required>
-        <SelectField
-          id="experience"
-          value={draft.experience}
-          onChange={(v) => update({ experience: v })}
-          placeholder="Select"
-          options={toOptions(EXPERIENCE_BANDS)}
-          required
-        />
-      </Field>
     </div>
   );
 }

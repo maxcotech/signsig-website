@@ -23,8 +23,8 @@ function formatSize(bytes: number): string {
  * and "PDF, DOCX": a field that states a limit and then accepts a 40MB .zip
  * has lied to the user. The error is rendered inline and announced.
  *
- * No upload happens — the `File` is held in form state for whatever endpoint
- * is wired later. See submit-application.ts.
+ * The `File` is held in form state until submit — see
+ * careers-application.api.ts for how it's sent.
  */
 export function FileDropzone({
   label,

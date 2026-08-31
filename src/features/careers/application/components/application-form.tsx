@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 
-import { ActionButton } from "@/components/common/action-button";
 import {
   APPLICATION_STEPS,
-  CONSENT,
-  SCREENING_QUESTIONS,
   countWords,
 } from "@/features/careers/application/application.data";
+import { useSubmitApplication } from "@/features/careers/application/careers-application.api";
+import { ApplicationFormFooter } from "@/features/careers/application/components/application-form-footer";
 import { StepBody } from "@/features/careers/application/components/step-body";
 import { StepTabs } from "@/features/careers/application/components/step-tabs";
 import { SuccessDialog } from "@/features/careers/application/components/success-dialog";
-import { submitApplication } from "@/features/careers/application/submit-application";
+import { draftToApplyPayload } from "@/features/careers/application/draft-to-apply-payload";
 import {
   emptyDraft,
   type ApplicationDraft,
 } from "@/features/careers/application/types";
+import type { JobScreeningQuestion } from "@/features/careers/careers.types";
 
 /**
  * The four-step application wizard.
@@ -24,27 +24,29 @@ import {
  * Each step is its own `<form>`, so "Next" is a real submit button and the
  * browser's own constraint validation runs before advancing — required fields,
  * email and URL formats all enforced with no validation library and no custom
- * error plumbing. The final step's submit calls `submitApplication()`.
- *
- * ⚠ NOTHING IS SENT. `submitApplication()` has no endpoint yet and returns
- * `not-configured`, which surfaces as the visible alert below. The success
- * dialog is only reachable on `{ ok: true }` — see submit-application.ts for
- * why that matters and how to wire it up.
+ * error plumbing. The final step's submit calls the real
+ * `useSubmitApplication()` mutation — POST /Careers/Roles/{id}/Apply.
  *
  * Draft state is one flat object in this component. It is deliberately NOT
  * persisted to localStorage: it holds a CV, a phone number and a LinkedIn
  * profile, and leaving that in browser storage on a shared machine is a
  * privacy problem, not a convenience feature.
  */
-export function ApplicationForm({ roleSlug }: { roleSlug: string }) {
+export function ApplicationForm({
+  roleId,
+  questions,
+}: {
+  roleId: number;
+  questions: readonly JobScreeningQuestion[];
+}) {
   const [draft, setDraft] = useState<ApplicationDraft>(() =>
-    emptyDraft(roleSlug),
+    emptyDraft(roleId),
   );
   const [stepIndex, setStepIndex] = useState(0);
   const [furthest, setFurthest] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [isSending, setIsSending] = useState(false);
+  const { mutateAsync, isPending } = useSubmitApplication();
 
   const update = (patch: Partial<ApplicationDraft>) =>
     setDraft((current) => ({ ...current, ...patch }));
@@ -54,8 +56,8 @@ export function ApplicationForm({ roleSlug }: { roleSlug: string }) {
 
   /** Word limits are not enforceable by the browser, so check them here. */
   function screeningOverLimit(): boolean {
-    return SCREENING_QUESTIONS.some(
-      (q) => countWords(draft.answers[q.id] ?? "") > q.limit,
+    return questions.some(
+      (q) => countWords(draft.answers[String(q.id)] ?? "") > q.maxWords,
     );
   }
 
@@ -79,12 +81,22 @@ export function ApplicationForm({ roleSlug }: { roleSlug: string }) {
       return;
     }
 
-    setIsSending(true);
-    const result = await submitApplication(draft);
-    setIsSending(false);
+    // The browser's own `required` on the dropzone already blocks getting
+    // this far without a résumé; this is a defensive backstop for the type,
+    // not the primary guard.
+    if (!draft.resume) {
+      setError("Please attach your résumé before submitting.");
+      return;
+    }
 
-    if (result.ok) setSubmitted(true);
-    else setError(result.message);
+    try {
+      await mutateAsync(draftToApplyPayload(draft, questions));
+      setSubmitted(true);
+    } catch {
+      setError(
+        "Something went wrong sending your application. Please try again, or email your CV to support@signsig.com.",
+      );
+    }
   }
 
   return (
@@ -95,7 +107,12 @@ export function ApplicationForm({ roleSlug }: { roleSlug: string }) {
           fields currently on screen. */}
       <form key={step.id} onSubmit={handleSubmit} noValidate={false}>
         <div className="mt-8">
-          <StepBody stepId={step.id} draft={draft} update={update} />
+          <StepBody
+            stepId={step.id}
+            questions={questions}
+            draft={draft}
+            update={update}
+          />
         </div>
 
         {error && (
@@ -107,29 +124,12 @@ export function ApplicationForm({ roleSlug }: { roleSlug: string }) {
           </p>
         )}
 
-        <div className="mt-stack-gap flex flex-wrap items-center justify-center gap-4">
-          <ActionButton
-            type="button"
-            variant="outline"
-            size="lg"
-            onClick={() => goTo(Math.max(0, stepIndex - 1))}
-            disabled={stepIndex === 0}
-          >
-            Back
-          </ActionButton>
-          <ActionButton type="submit" size="lg" disabled={isSending}>
-            {isLast ? "Submit Application" : "Next"}
-          </ActionButton>
-        </div>
-
-        {/* Content-document copy that isn't in the design. Only on the final
-            step, where it is a statement about what happens next rather than
-            a claim floating over an unfinished form. */}
-        {isLast && (
-          <p className="mt-4 text-center text-body-sm text-muted-foreground">
-            {CONSENT.submitNote}
-          </p>
-        )}
+        <ApplicationFormFooter
+          stepIndex={stepIndex}
+          isLast={isLast}
+          isPending={isPending}
+          onBack={() => goTo(Math.max(0, stepIndex - 1))}
+        />
       </form>
 
       <SuccessDialog open={submitted} />

@@ -1,25 +1,15 @@
 /**
- * Application form content: the four steps, the screening questions and the
- * select options.
+ * Application form content that ISN'T sourced from the API: the four step
+ * definitions, consent copy, and upload constraints.
  *
- * ✅ NOW FROM THE CONTENT DOCUMENT (2026-08-26), not inferred. The design
- * showed every dropdown closed, so the option lists were previously guesses.
- * The document specifies them, and also corrects several `required` flags the
- * design's `*` markers got wrong. Where the two disagree the document wins on
- * content; the design still owns layout.
- *
- * Design vs document differences, all resolved in the document's favour:
- *
- *   - LinkedIn Profile and Portfolio / GitHub were marked `*` in the design.
- *     The document makes both OPTIONAL (portfolio "required for engineering
- *     roles", which is per-role logic the form cannot express, so it is a
- *     helper hint instead).
- *   - Phone placeholder was "+0 (000) 000-0000"; the document gives
- *     "+1 (555) 123-4567".
- *   - Screening question 5 was `*` in the design; the document makes it
- *     optional.
- *   - The document adds a "write your cover letter" textarea as an
- *     alternative to uploading one. See docs/DECISIONS.md.
+ * Screening questions, notice-period options and experience-band options
+ * used to live here too. They're gone — screening questions come from
+ * GET /Careers/ScreeningQuestions (see `careers.api.ts`), and the notice/
+ * experience option lists moved to `careers-application.api.ts` because
+ * that's where their real enum VALUES (not just their display labels) are
+ * defined, right next to the warning about how unconfirmed those values are.
+ * "Desired Role" is gone entirely — the real Apply endpoint has no field for
+ * it. See docs/DECISIONS.md.
  */
 
 export const APPLICATION_STEPS = [
@@ -30,89 +20,6 @@ export const APPLICATION_STEPS = [
 ] as const;
 
 export type StepId = (typeof APPLICATION_STEPS)[number]["id"];
-
-/**
- * NOT EXPORTED, deliberately. The document gives the form a visible header —
- * "Apply to SignSig" / "We're building the future of digital agreements. Tell
- * us about yourself." — but all four design frames show only the Back link and
- * the step tabs above "Personal Info". The document wins on copy; the design
- * still owns layout, so the header is recorded here and not rendered. The page
- * has an `sr-only` <h1> naming the role instead. Raised for the user's call.
- */
-
-/** Desired Role — the document's four job families plus Support. */
-export const DESIRED_ROLES = [
-  "Engineering (Backend, Frontend, Full-stack, DevOps, Security)",
-  "Product (Product Manager, Designer, Researcher)",
-  "Go-to-Market (Sales, Business Development, Customer Success)",
-  "Operations (HR, Finance, Legal, Communications)",
-  "Support (Customer Support, Technical Support)",
-] as const;
-
-export const NOTICE_PERIODS = [
-  "Immediately available",
-  "1-2 weeks notice",
-  "2-4 weeks notice",
-  "1-3 months notice",
-  "3+ months notice",
-] as const;
-
-export const EXPERIENCE_BANDS = [
-  "0–1 years",
-  "2–3 years",
-  "4–5 years",
-  "6–8 years",
-  "9–12 years",
-  "12+ years",
-] as const;
-
-/**
- * The six screening questions with their word limits. Question 5 is optional
- * per the document, which is why `required` is explicit rather than assumed.
- */
-export const SCREENING_QUESTIONS = [
-  {
-    id: "interest",
-    label: "Why are you interested in working at SignSig?",
-    limit: 500,
-    required: true,
-  },
-  {
-    id: "complex-problem",
-    label:
-      "Describe a time when you solved a complex problem. What was your approach?",
-    limit: 300,
-    required: true,
-  },
-  {
-    id: "disagreement",
-    label:
-      "Tell us about a time when you disagreed with a colleague or manager. How did you handle it?",
-    limit: 300,
-    required: true,
-  },
-  {
-    id: "learning",
-    label:
-      "What is one thing you've learned in the past year that has changed how you work?",
-    limit: 200,
-    required: true,
-  },
-  {
-    id: "relationships",
-    label:
-      "How do you approach building or maintaining relationships with people you work with?",
-    limit: 250,
-    required: false,
-  },
-  {
-    id: "environment",
-    label:
-      "Describe your ideal work environment and what makes a team functional.",
-    limit: 250,
-    required: true,
-  },
-] as const;
 
 /** Consent block copy, verbatim. The Privacy Policy is a link in the design. */
 export const CONSENT = {

@@ -26,6 +26,14 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Embed document signing into your existing workflow with pre-built integrations for productivity, storage, CRM, HR and finance tools.",
   path: "/developers/integration-hub",
+  keywords: [
+    "SignSig integrations",
+    "document signing integrations",
+    "Microsoft 365 integration",
+    "Google Workspace integration",
+    "Slack integration",
+    "API integrations",
+  ],
 });
 
 export default function IntegrationHubPage() {

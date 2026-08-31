@@ -19,7 +19,17 @@ import { buildMetadata } from "@/lib/seo";
  * No `title` passed to `buildMetadata()`: the home page wants the absolute
  * default from the root layout rather than the "%s | SignSig" template.
  */
-export const metadata: Metadata = buildMetadata({ path: "/" });
+export const metadata: Metadata = buildMetadata({
+  path: "/",
+  keywords: [
+    "digital signature software",
+    "electronic signature",
+    "e-signature platform",
+    "document signing",
+    "open source e-signature",
+    "SignSig",
+  ],
+});
 
 export default function HomePage() {
   return (

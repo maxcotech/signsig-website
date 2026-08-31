@@ -1,12 +1,15 @@
-import type { Role } from "@/features/careers/careers.data";
+import { formatSalaryRange } from "@/features/careers/careers.api";
+import type { JobRoleDetail } from "@/features/careers/careers.types";
 
 function BulletSection({
   title,
   items,
 }: {
   title: string;
-  items: readonly string[];
+  items: readonly string[] | null;
 }) {
+  if (!items || items.length === 0) return null;
+
   return (
     <section aria-labelledby={title} className="mt-8">
       <h2 id={title} className="text-body font-semibold text-foreground">
@@ -23,22 +26,24 @@ function BulletSection({
 
 /**
  * A job posting's body: About the Role, Key Responsibilities, Required
- * Skills, Nice to Have.
+ * Skills, Nice to Have — all from GET /Careers/Roles/{id}.
  *
- * Roles with no published `detail` fall back to their meta plus an honest
- * note. Extracted from the route so `[role]/page.tsx` stays a composition
- * rather than an implementation — and so it clears the 150-line ceiling.
+ * Every field the API gives beyond the summary (location, employment type,
+ * salary) is nullable, so a posting can genuinely have none of them filled
+ * in yet. When `aboutTheRole` is missing, this falls back to the same meta +
+ * honest-note treatment the old static data used for its undescribed roles —
+ * a candidate can still apply either way.
  */
-export function RoleDescription({ role }: { role: Role }) {
-  const { detail } = role;
+export function RoleDescription({ role }: { role: JobRoleDetail }) {
+  const salary = formatSalaryRange(role);
 
-  if (!detail) {
+  if (!role.aboutTheRole) {
     return (
       <p className="mt-6 text-body-sm text-muted-foreground">
-        {role.location} &bull; {role.employmentType}
-        {role.salaryRange ? ` • ${role.salaryRange}` : ""}. The full description
-        for this role isn&rsquo;t published yet — you can still apply and
-        we&rsquo;ll send you the details.
+        {role.location} &bull; {role.employmentTypeText}
+        {salary ? ` • ${salary}` : ""}. The full description for this role
+        isn&rsquo;t published yet — you can still apply and we&rsquo;ll send you
+        the details.
       </p>
     );
   }
@@ -52,15 +57,15 @@ export function RoleDescription({ role }: { role: Role }) {
         >
           About the Role
         </h2>
-        <p className="mt-3 text-body-sm text-foreground">{detail.about}</p>
+        <p className="mt-3 text-body-sm text-foreground">{role.aboutTheRole}</p>
       </section>
 
       <BulletSection
         title="Key Responsibilities:"
-        items={detail.responsibilities}
+        items={role.keyResponsibilities}
       />
-      <BulletSection title="Required Skills:" items={detail.requiredSkills} />
-      <BulletSection title="Nice to Have:" items={detail.niceToHave} />
+      <BulletSection title="Required Skills:" items={role.requiredSkills} />
+      <BulletSection title="Nice to Have:" items={role.niceToHave} />
     </>
   );
 }

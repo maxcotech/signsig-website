@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
 
 import { getIndexedRoutes } from "@/config/routes";
+import {
+  flattenRoles,
+  getJobRolesOverview,
+  roleSlug,
+} from "@/features/careers/careers.api";
 import { absoluteUrl } from "@/lib/seo";
 
 /**
@@ -10,16 +15,35 @@ import { absoluteUrl } from "@/lib/seo";
  *
  * Add a page => add its entry to ROUTES => it appears here automatically.
  *
- * `lastModified` uses build time. That is honest for a statically generated
- * marketing site: the content genuinely did last change when it was deployed.
+ * Individual career role pages are the one exception: they come from a live
+ * API, not `ROUTES`, so they are fetched here directly. This function is
+ * async specifically to allow that — Next.js supports an async `sitemap()`.
+ * The fetch is try/caught: if the backend is unreachable when the sitemap is
+ * generated, the site's static routes still produce a valid sitemap with the
+ * role pages simply absent, rather than the whole sitemap request failing.
+ *
+ * `lastModified` uses build/request time. That is honest for a statically
+ * generated marketing site: the content genuinely did last change then.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
-  return getIndexedRoutes().map((route) => ({
+  const staticEntries = getIndexedRoutes().map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
+
+  const overview = await getJobRolesOverview().catch(() => null);
+  const roleEntries = overview
+    ? flattenRoles(overview).map((role) => ({
+        url: absoluteUrl(`/resources/careers/${roleSlug(role.title)}`),
+        lastModified,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+      }))
+    : [];
+
+  return [...staticEntries, ...roleEntries];
 }

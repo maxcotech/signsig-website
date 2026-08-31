@@ -25,6 +25,41 @@ export function getSiteUrl(): string {
   return "http://localhost:3000";
 }
 
+/**
+ * Origin of the SignSig business app — the product itself, not this
+ * marketing site. Every "Get Started" CTA on the marketing site sends the
+ * visitor here to sign up.
+ *
+ * Reads NEXT_PUBLIC_BUSINESS_APP_URL so CI/CD can point each deployed
+ * environment (staging, production) at the matching business-app
+ * environment without a code change. Falls back to the shared staging app
+ * so local dev and any deployment that forgets to set the var still link
+ * somewhere real rather than to a bare "#" or a 404.
+ */
+export function getBusinessAppUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_BUSINESS_APP_URL?.trim();
+  const base = raw || "https://signsig-business-dev.netlify.app";
+  return base.replace(/\/+$/, "");
+}
+
+/**
+ * Origin the marketing site's API client (`src/lib/api/`) sends requests to
+ * — the same backend the business app (`signsig-web`) talks to, not this
+ * site's own Next.js server. Read via NEXT_PUBLIC_API_BASE_URL so CI/CD can
+ * point each deployment at the matching backend environment, mirroring
+ * `getBusinessAppUrl()` above.
+ *
+ * No hardcoded fallback here, unlike the two getters above: an unset business
+ * app URL still sends a visitor somewhere real (the shared staging app), but
+ * an unset API URL should fail loudly the first time something tries to call
+ * it, not silently start hitting a guessed origin. `src/lib/api/client.ts`
+ * throws if this is empty.
+ */
+export function getApiBaseUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  return raw ? raw.replace(/\/+$/, "") : "";
+}
+
 export const SITE = {
   /** Brand name, exactly as it should ever appear in text. */
   name: "SignSig",

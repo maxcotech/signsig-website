@@ -26,6 +26,13 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Integrate digital signatures and approval workflows into your application using our official SDKs, APIs, and developer tools.",
   path: "/developers/sdks-libraries",
+  keywords: [
+    "SignSig SDK",
+    "e-signature API",
+    "document signing API",
+    "developer SDK",
+    "signature verification API",
+  ],
 });
 
 export default function SdksLibrariesPage() {

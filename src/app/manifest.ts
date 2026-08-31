@@ -10,10 +10,13 @@ import { OG_COLORS } from "@/lib/raw-colors";
  * is parsed by the OS/browser, not by a CSS engine — so they come from the
  * allowlisted escape file rather than being written inline here.
  *
- * The icon paths below are DECLARED but the files do not exist yet. Generate
- * them from the real logo (192px and 512px PNGs into `public/icons/`) before
- * launch, or drop the entries. A manifest pointing at a 404 is worse than a
- * manifest with no icons.
+ * The icons below now EXIST (2026-08-26), generated from
+ * `public/images/signsig-favicon.webp`. They were declared but missing until
+ * then — a manifest pointing at a 404 is worse than one with no icons.
+ *
+ * 192 is `maskable`, so it is opaque and keeps the mark inside the inner 80%
+ * safe zone; Android crops maskable icons to whatever shape the launcher uses.
+ * 512 is `any`, so it stays transparent.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

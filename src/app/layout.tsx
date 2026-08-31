@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 
+import { QueryProvider } from "@/components/common/query-provider";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
@@ -54,10 +55,11 @@ export const metadata: Metadata = {
   applicationName: SITE.name,
   referrer: "origin-when-cross-origin",
   formatDetection: { telephone: false, address: false, email: false },
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
+  // NO `icons` KEY ON PURPOSE. Setting it here OVERRIDES Next's icon file
+  // conventions, which is what silently shadowed the real icons. The tags now
+  // come from `app/favicon.ico`, `app/icon.png` and `app/apple-icon.png`.
+  // The old block also pointed `apple` at /apple-touch-icon.png, a file that
+  // never existed — a 404 on every page.
   openGraph: {
     type: "website",
     siteName: SITE.name,
@@ -98,15 +100,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col">
-        <ThemeProvider>
-          <SkipLink />
-          <Header />
-          {/* The id is the target of <SkipLink>. Do not rename it. */}
-          <main id="main-content" className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <SkipLink />
+            <Header />
+            {/* The id is the target of <SkipLink>. Do not rename it. */}
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </ThemeProvider>
+        </QueryProvider>
 
         <JsonLd schema={buildOrganizationSchema()} />
         <JsonLd schema={buildWebSiteSchema()} />

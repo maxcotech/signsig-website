@@ -14,6 +14,7 @@
  * Add a solution there, and the nav, the routes and the page all follow.
  */
 
+import { getBusinessAppUrl } from "@/config/site";
 import {
   SOLUTION_GROUP_TITLES,
   type SolutionGroup,
@@ -82,7 +83,10 @@ export const MAIN_NAV: readonly (NavItem | NavMenuItem)[] = [
         items: [
           { label: "API Documentation", href: "/developers/api-documentation" },
           { label: "SDKs & Libraries", href: "/developers/sdks-libraries" },
-          { label: "Integration Hub", href: "/developers/integration-hub" },
+          // "Integration Hub" removed from navigation at the user's request
+          // ("comment out till we have something") — the route, its
+          // sitemap entries and its content are untouched, so it stays
+          // reachable by direct URL. See docs/DECISIONS.md.
         ],
       },
     ],
@@ -114,8 +118,20 @@ export const MAIN_NAV: readonly (NavItem | NavMenuItem)[] = [
   },
 ] as const;
 
-/** Header/mobile-sheet auth actions — "Sign In" (text) and "Sign Up" (button). */
-export const SIGN_IN_NAV: NavItem = { label: "Sign In", href: "/sign-in" };
+/**
+ * Header/mobile-sheet auth actions — "Sign In" (text) and "Sign Up" (button).
+ *
+ * "Sign In" routes straight to the business app's real login route
+ * (`signsig-web`'s `routes/(auth)/login.tsx` — the parenthesised segment is a
+ * route group and does not appear in the URL, so the path is just `/login`),
+ * since there is nothing to sign in to on this marketing site. "Sign Up"
+ * still points at the in-repo `/sign-up` placeholder — untouched, out of
+ * scope for this change. See docs/DECISIONS.md.
+ */
+export const SIGN_IN_NAV: NavItem = {
+  label: "Sign In",
+  href: `${getBusinessAppUrl()}/login`,
+};
 export const SIGN_UP_NAV: NavItem = { label: "Sign Up", href: "/sign-up" };
 
 /**
@@ -141,7 +157,7 @@ export const FOOTER_NAV: readonly NavGroup[] = [
     items: [
       { label: "API Documentation", href: "/developers/api-documentation" },
       { label: "SDKs & Libraries", href: "/developers/sdks-libraries" },
-      { label: "Integration Hub", href: "/developers/integration-hub" },
+      // "Integration Hub" removed — see the matching note on MAIN_NAV above.
     ],
   },
   {
@@ -149,7 +165,10 @@ export const FOOTER_NAV: readonly NavGroup[] = [
     items: [
       { label: "Terms of Service", href: "/terms" },
       { label: "Privacy Policy", href: "/privacy" },
-      { label: "Security & Compliance", href: "/legal/security-compliance" },
+      // "Security & Compliance" removed at the user's request ("till we have
+      // something") — the route and its content are untouched and still
+      // reachable directly; only this nav entry is hidden. See
+      // docs/DECISIONS.md.
       { label: "Cookie Policy", href: "/legal/cookie-policy" },
     ],
   },

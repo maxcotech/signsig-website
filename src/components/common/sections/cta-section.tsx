@@ -1,17 +1,22 @@
-import Link from "next/link";
 import { ChevronRightIcon, ZapIcon } from "lucide-react";
 
 import { ActionButton } from "@/components/common/action-button";
 import { EyebrowBadge } from "@/components/common/eyebrow-badge";
-import { GithubIcon } from "@/components/common/github-icon";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
+import { getBusinessAppUrl } from "@/config/site";
 
 /**
  * The closing "Automate Everything" CTA band. Copy transcribed verbatim.
  * `bg-primary` matches the design's fill exactly — sampled pixel-for-pixel
  * against the brand primitive already in the token system, so no new token
  * is needed here.
+ *
+ * "Get Started" leaves this site for the SignSig business app
+ * (`getBusinessAppUrl()`), same as the hero and workflow-section CTAs — this
+ * is where a visitor actually starts using the product. The "View Github"
+ * button that sat beside it is removed per the task tracker; there is no
+ * secondary CTA here now.
  *
  * The footer's dark surface starts BEHIND the lower part of this card, so the
  * green panel straddles the boundary between the page and the footer — that
@@ -55,30 +60,15 @@ export function CtaSection() {
             Sign, Route, and Verify Documents Without the Paperwork
           </h2>
 
-          <div className="mt-stack-gap flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-stack-gap">
             <ActionButton
               asChild
               size="lg"
               className="bg-white text-primary-text hover:bg-white/90"
             >
-              <Link href="/sign-up">
+              <a href={getBusinessAppUrl()}>
                 Get Started
                 <ChevronRightIcon aria-hidden="true" />
-              </Link>
-            </ActionButton>
-            <ActionButton
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-white/40 bg-transparent text-primary-foreground hover:bg-white/10"
-            >
-              <a
-                href="https://github.com/signsig"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View Github
-                <GithubIcon aria-hidden="true" />
               </a>
             </ActionButton>
           </div>

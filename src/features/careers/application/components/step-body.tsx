@@ -6,6 +6,7 @@ import { StepPersonalInfo } from "@/features/careers/application/components/step
 import { StepProfessionalInfo } from "@/features/careers/application/components/step-professional-info";
 import { StepScreening } from "@/features/careers/application/components/step-screening";
 import type { ApplicationDraft } from "@/features/careers/application/types";
+import type { JobScreeningQuestion } from "@/features/careers/careers.types";
 
 /**
  * Which step is on screen.
@@ -16,10 +17,13 @@ import type { ApplicationDraft } from "@/features/careers/application/types";
  */
 export function StepBody({
   stepId,
+  questions,
   draft,
   update,
 }: {
   stepId: StepId;
+  /** From GET /Careers/ScreeningQuestions — only the "screening" step needs it. */
+  questions: readonly JobScreeningQuestion[];
   draft: ApplicationDraft;
   update: (patch: Partial<ApplicationDraft>) => void;
 }) {
@@ -29,7 +33,9 @@ export function StepBody({
     case "professional":
       return <StepProfessionalInfo draft={draft} update={update} />;
     case "screening":
-      return <StepScreening draft={draft} update={update} />;
+      return (
+        <StepScreening questions={questions} draft={draft} update={update} />
+      );
     case "documents":
       return <StepDocuments draft={draft} update={update} />;
   }

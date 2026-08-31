@@ -24,6 +24,12 @@ export const metadata: Metadata = buildMetadata({
   title: "Knowledge Base",
   description: KB_PAGE.intro,
   path: "/resources/knowledge-base",
+  keywords: [
+    "SignSig knowledge base",
+    "SignSig help center",
+    "document signing documentation",
+    "SignSig support articles",
+  ],
 });
 
 export default function KnowledgeBasePage() {

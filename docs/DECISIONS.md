@@ -2105,3 +2105,468 @@ containing block's _padding box_, so padding on the same element is ignored
 entirely. Hence the inner `relative h-full w-full` wrapper: the outer box keeps
 the fixed `aspect-ratio` (which applies to the border box, so the cards stay
 aligned) and the inner box is what the image actually fills.
+
+---
+
+## 2026-08-26 — Favicon applied, and two icon bugs it uncovered
+
+The user dropped `signsig-favicon.webp` (64×64, transparent, the
+document-and-signature mark in brand green) into `public/images/home/` and
+asked for it to be applied. Applying it properly meant fixing two existing
+faults first.
+
+### The `icons` key in `layout.tsx` was shadowing everything
+
+`metadata.icons` **overrides** Next's icon file conventions. So dropping an
+`icon.png` into `src/app/` would have done nothing at all — the hand-written
+block would have kept winning. It is removed; the tags now come from
+`app/favicon.ico`, `app/icon.png` and `app/apple-icon.png`.
+
+That same block declared `apple: "/apple-touch-icon.png"` — **a file that has
+never existed in this repo.** Every page was emitting a link to a 404.
+
+### `manifest.ts` was pointing at two more 404s
+
+The file's own comment admitted it: _"The icon paths below are DECLARED but the
+files do not exist yet… A manifest pointing at a 404 is worse than a manifest
+with no icons."_ `public/icons/` held nothing but a `.gitkeep`. Both are now
+generated.
+
+### What was generated
+
+| File                        | Size       | Opaque? | Why                                                   |
+| --------------------------- | ---------- | ------- | ----------------------------------------------------- |
+| `src/app/favicon.ico`       | 16, 32, 48 | no      | Replaces the create-next-app default (25.9kB → 3.2kB) |
+| `src/app/icon.png`          | 64         | no      | Native size — no resampling                           |
+| `src/app/apple-icon.png`    | 180        | **yes** | iOS composites **black** behind transparency          |
+| `public/icons/icon-192.png` | 192        | **yes** | `maskable`; mark inside the inner 80% safe zone       |
+| `public/icons/icon-512.png` | 512        | no      | `purpose: any`                                        |
+
+`.webp` is **not** one of Next's supported icon conventions (`.ico`, `.jpg`,
+`.jpeg`, `.png`, `.svg`), so the source could not simply be renamed into place.
+The source moved to `public/images/signsig-favicon.webp` — it belongs beside
+`signsig-logo.png`, not among the home page's card illustrations.
+
+sharp cannot write ICO, so the container is packed by hand: a 6-byte header, a
+16-byte directory entry per image, then PNG blobs. Verified by parsing it back
+— three entries at 16/32/48, each decoding to its declared size.
+
+### Verified in the build
+
+```
+<link rel="icon" href="/favicon.ico?…" sizes="48x48" type="image/x-icon"/>
+<link rel="icon" href="/icon.png?…" sizes="64x64" type="image/png"/>
+<link rel="apple-touch-icon" href="/apple-icon.png?…" sizes="180x180" type="image/png"/>
+```
+
+Zero references to `/apple-touch-icon.png` remain, and the manifest's two icons
+resolve to real files.
+
+### Caveat
+
+**64px is the largest source that exists.** I checked the design export (the
+header mark is only ~53px tall even at the 2560px scale), `signsig-logo.png`
+(173×56) and the loose logo files in Downloads (169×52, 275×72) — nothing
+bigger. So 192 and 512 are upscaled with lanczos3. The mark is flat and simple
+enough to survive it, but a larger export or an SVG would be better; the
+generation is a re-run away.
+
+---
+
+## 2026-08-26 (later still) — Task-tracker items: business-app CTAs, hero cleanup, SDKs link
+
+Worked from a task tracker screenshot listing frontend tickets. Applied the
+four that are in scope for this repo; the rest are logged below as out of
+scope or blocked.
+
+### `getBusinessAppUrl()` — a second env-driven origin, alongside `getSiteUrl()`
+
+"Get Started" was linking to `/sign-up`, a route that does not exist anywhere
+in this app — it is a placeholder used across 8 files. The task specifies the
+real destination: the SignSig **business app**, a separate deployment
+(`https://signsig-business-dev.netlify.app` for staging), and asks for it to
+come from the environment so CI/CD can point each deployment at the matching
+business-app environment.
+
+Added `NEXT_PUBLIC_BUSINESS_APP_URL` to `.env.example` and
+`getBusinessAppUrl()` in `config/site.ts`, mirroring `getSiteUrl()`'s existing
+shape exactly: trim, fall back to the known staging URL if unset (so local dev
+and any deployment that forgets to set it still link somewhere real), strip
+trailing slashes.
+
+**Scope held to exactly the two CTAs the tracker named** — the home hero's
+"Get Started" and the workflow section's "Get Started With SignSig". The CTA
+band, the pricing cards and the solutions pages all still point at `/sign-up`
+and were left alone; repointing every occurrence site-wide is a different,
+larger task than the two tickets given.
+
+### Home hero: Github button removed, Get Started repointed
+
+Both were separate tickets landing on the same component. The hero now has a
+single primary CTA — an external `<a>` to `getBusinessAppUrl()` — and the
+two-button flex row collapsed to one button, since a `sm:flex-row` wrapper
+with a single child was dead code once its sibling was gone.
+
+### "Built For Developers" — Github button now links to SDKs & Libraries
+
+The button already rendered as a real `<ActionButton>`; only the destination
+was wrong. Changed `<a href="https://github.com/signsig">` to
+`<Link href="/developers/sdks-libraries">`, relabelled "View on Github" to
+"View SDKs & Libraries" (leaving the old label on a button that no longer goes
+to Github would be a lie the button tells), and swapped `GithubIcon` for
+`ArrowRightIcon` — this codebase's existing convention for a button that
+navigates to another page on this site rather than off it (see
+`<IntegrationCard>`, `<TrustPage>`).
+
+### Out of scope for this repo
+
+**"UPDATE & DELETE statements should not run on the audit table."** This
+repository has no database, no schema, no backend of any kind — it is a static
+Next.js marketing site. Confirmed: no `.sql`, `schema.prisma`, or migration
+files anywhere, and no `pg`/`mysql`/`prisma`/`drizzle`/`supabase` dependency in
+`package.json`. This ticket belongs to whatever service actually owns the
+audit table — a different repository.
+
+### Blocked — no assets
+
+**"Trusted Without Limitations" logo strip → SRMS, Vasapp, Dotta, Workpadi.**
+The current strip is a single flattened image lifted from the design, showing
+the previous set of company marks (access, Flutterwave, Paystack, Cowrywise,
+Bolt, Uber, LeMFi, Vercel). Replacing it with different companies' logos means
+compositing four **real trademarked marks** that do not exist anywhere in this
+project — checked `public/`, the Downloads folder, and the content document.
+Fabricating a logo for a real company is the same category of problem this
+codebase already refuses elsewhere (the Integration Hub renders a neutral
+placeholder icon rather than misattributing Microsoft's mark to every card).
+Needs the four real logo files supplied before this can be done; flagging
+rather than guessing at what SRMS/Vasapp/Dotta/Workpadi's marks look like.
+
+---
+
+## 2026-08-26 (later still) — Trust-bar mobile sizing, and the API integration layer
+
+### Ticket 11 — trust-bar logos illegible on mobile
+
+Confirmed by measurement, not just by eye: the strip is one flattened
+2382×52 image at `w-full h-auto`, so it scales with the viewport. At a 360px
+phone that's a ~7.5px-tall render — not "small," genuinely unreadable. The
+component's own comment had rationalised this as the doctrine's "reduce
+decorative art" case, which was the wrong precedent: the alt text names every
+company because which companies these are IS the content, so it isn't
+decorative, and the doctrine's actual answer for a horizontal row on mobile is
+scroll, not shrink.
+
+Fixed below `md` only (the ticket named mobile specifically, and the `md`+
+fluid behaviour was never flagged): the image now holds a fixed `h-7` and the
+strip scrolls horizontally in its own `overflow-x-auto` wrapper instead of
+compressing. `md`+ is untouched.
+
+Left alone on purpose: the image still shows the original company set
+(access, Flutterwave, Paystack, Cowrywise, Bolt, Uber, LeMFi, Vercel). The
+user has a replacement export coming with SRMS/Vasapp/Dotta/Workpadi; when it
+lands, the `alt` text needs to change with it — noted directly in the
+component's doc comment so that isn't missed.
+
+### Ticket 12 — remove "Security & Compliance" from the footer: NOT done, and here's why
+
+The ticket reads "till we have something." We now have something: earlier
+this session, `/legal/security-compliance` was fully populated from the
+content document — headline, intro, subsectioned feature groups, an FAQ
+accordion, and a CTA (see the 2026-08-26 entry above, "Integration Hub,
+Pricing and Solutions reconciled with the document"). It is no longer the
+empty stub the ticket describes.
+
+Removing a footer link to a page that now has real, complete content because
+of a ticket written against the _previous_ state would be a regression, not a
+fix. I did not act on this one — flagging it back rather than guessing which
+way the user wants it resolved now that its premise has changed.
+
+### "Set up React the signsig-web way, ready for when APIs are needed"
+
+`signsig-web` (the sibling business-app project, found alongside this repo)
+already has a working API layer: `src/api/*.api.ts` modules, a shared axios
+client, generic `getService`/`postService`/etc. wrappers unwrapping a
+`{ status, message, data }` envelope, and a TanStack Query provider. Built the
+same shape here, in `src/lib/api/` — same function names, same generic
+signatures, same per-resource hook convention — so a developer moving between
+the two repos recognises it immediately. Full writeup in the new
+`docs/API.md`; summary of what's new:
+
+- **Dependencies added:** `axios`, `@tanstack/react-query` (same major
+  versions as `signsig-web`).
+- **`config/site.ts` → `getApiBaseUrl()`**, alongside the existing
+  `getSiteUrl()`/`getBusinessAppUrl()`. No hardcoded fallback, unlike those
+  two — an unset API URL should fail loudly the moment something calls it,
+  not silently guess a wrong origin.
+- **`lib/api/{client,methods,query-client,types}.ts`** — the axios instance,
+  the five generic service wrappers, the `QueryClient` factory, and the
+  shared type vocabulary (`ApiResponse<T>`, `ApiError<T>`,
+  `QueryOptionsWithError`, `MutationOptionsWithError`, pagination types).
+- **`components/common/query-provider.tsx`**, wrapping `<ThemeProvider>` in
+  the root layout.
+
+**Two deliberate departures from `signsig-web`, both because this is Next.js
+App Router and that project is a client-rendered SPA:**
+
+1. **No auth.** `signsig-web`'s client attaches a bearer token from a cookie
+   and redirects to `/login` on 401. This is a public marketing site with no
+   login and no session — there is nothing to attach. If a protected area
+   ever appears here, that's where the interceptor grows the same shape.
+2. **`QueryClient` is not a module-level singleton.** `signsig-web` can use
+   one client for the whole browser session safely, since it never renders on
+   a server shared by concurrent visitors. This site does. A module-level
+   client here would leak one visitor's cache into another's server-rendered
+   response, so `<QueryProvider>` builds it with `useState` inside the
+   component instead — once per browser session, which is what Next's own
+   React Query guidance prescribes for the App Router.
+
+**One mechanical fix forced by this repo's own rules, not a stylistic choice:**
+`signsig-web`'s `client.ts` does `export default client`. This repo's
+`no-restricted-exports` lint rule forbids default exports outside the
+Next.js file conventions that require them (STRUCTURE.md, "Named exports
+only"). `apiClient` is a named export here — the one place the two layers
+don't match byte-for-byte, and it's this repo's own house rule winning, not
+an oversight.
+
+**Verified beyond `npm run check` passing (68/68 static pages, meaning
+`layout.tsx` — which now mounts `<QueryProvider>` on every route — built
+clean):** ran `next start` against the production build and curled `/`,
+`/pricing` and `/developers/integration-hub` directly. All three returned
+HTTP 200 with the expected content present and nothing in the server log.
+Grepping the built JS chunks for library names was tried first and abandoned
+— minified/Turbopack output doesn't preserve literal package-name strings,
+so absence of a substring there proves nothing either way; the HTTP
+round-trip is the real signal.
+
+**No real endpoint was wired up.** The one existing not-connected seam,
+`features/careers/application/submit-application.ts`, still returns its
+honest `not-configured` result — nothing changed at runtime. Its "WIRING IT
+UP" doc comment was rewritten to show the `postService` call to drop in once
+a real endpoint exists, so it doubles as the worked example `docs/API.md`
+points to. No toast/notification library was added: this site has none today,
+the careers form already renders its own inline error from a typed result,
+and deciding to add one is a design call to raise with the user, not a
+default to reach for while wiring plumbing.
+
+---
+
+## 2026-08-29 — Careers pages integrated against the real API
+
+Two `swagger.json` files exist on disk — this repo's own root
+(`swagger.json`, newer, larger) and one inside the sibling `signsig-web`
+project — and they differ. Worked from this repo's copy, since it was the one
+placed here for this task. Its `Careers` tag has four endpoints:
+`GET /Careers/Roles`, `GET /Careers/Roles/{id}`,
+`GET /Careers/ScreeningQuestions`, `POST /Careers/Roles/{id}/Apply`.
+
+Scope held to exactly the careers pages, per the user's "only that." Every
+other feature (SDKs, integrations, pricing, etc.) is untouched and still has
+no live backend behind it.
+
+### Deleted, fully superseded
+
+`features/careers/careers.data.ts`, `role-details.data.ts`, and
+`application/submit-application.ts`. All three existed to hold static content
+or a placeholder result because there was no live endpoint. One exists now.
+Keeping the static files around as unreachable dead code, or as a "fallback
+dataset" for when the API is down, would mean silently mixing fabricated data
+with real data depending on network conditions — worse than an honest failure
+state. `<CareersUnavailable>` is that honest failure state.
+
+### The URL scheme stays slugs, not the API's numeric ids
+
+The API identifies a role by integer `id`; this site's URLs
+(`/resources/careers/senior-backend-engineer`) predate this integration.
+Rather than break every existing link and give up the readable URL,
+`roleSlug()` derives a slug from `title` via the existing `slugify()` helper
+(built earlier this session for legal-page anchors), and the pages resolve
+slug to the matching `JobRoleListItem` to its numeric `id` before calling the
+detail or apply endpoints. `findRoleBySlug()` does that lookup once per
+request.
+
+### `dynamicParams` flipped from `false` to `true`, and why the sitemap moved
+
+The old registry was a synchronous, module-level `ROLES` array —
+`generateStaticParams` and the sitemap could both read it with no `await`.
+Roles are now live data, so:
+
+- Both `[role]` routes are now `dynamicParams = true`. `generateStaticParams`
+  tries a live fetch and returns `[]` on failure (which is what happens in
+  any environment without `NEXT_PUBLIC_API_BASE_URL` set, including this
+  one) — the build never fails over it, and every role still resolves via
+  on-demand rendering.
+- `config/routes.ts` no longer lists individual role paths — it's a
+  synchronous list evaluated at build time and cannot await a network call.
+- `app/sitemap.ts` became async instead (Next.js supports this) and fetches
+  live roles itself, wrapped in a catch. Static routes still populate the
+  sitemap unconditionally; role pages are appended only when the fetch
+  succeeds.
+
+### Two honest-failure states, kept deliberately distinct
+
+`notFound()` fires only when the overview fetch succeeded and genuinely has
+no matching role — the API has spoken. When the overview fetch fails
+outright, the pages render `<CareersUnavailable>` instead: a network hiccup
+tells you nothing about whether a role exists, and 404-ing a real posting
+because the backend was briefly unreachable would be actively wrong, not
+merely imprecise. Same posture as this codebase's `resources/system-status`
+and the now-deleted `submit-application.ts`.
+
+### `cache()` around the three reads
+
+`getService` goes through axios, not the framework's `fetch()`, so Next's
+automatic per-request request deduplication doesn't apply to it. Without
+wrapping the three read functions in React's `cache()`, `generateMetadata`
+and the page component — which Next invokes separately for the same
+request — would each independently re-fetch the same role, doubling every
+role-page request against the backend for nothing. `cache()` memoizes by
+arguments for the request's lifetime, which closes that gap.
+
+### Content decisions the API forced, not preferences
+
+- Desired Role removed from Step 2. The real Apply request body has no field
+  for it at all — nothing beyond the personal, professional, screening and
+  document fields the schema actually declares. A form field the API
+  silently discards is worse than no field.
+- Cover letter text becomes a plain-text file at submit time. The schema has
+  one binary CoverLetter field, no text-body equivalent for the "write it
+  inline" alternative added earlier from the content document. Rather than
+  drop that feature, the FormData builder packages typed text into a
+  plain-text File before appending it — an actual upload still wins if both
+  are present.
+- Screening questions are all required now. The document-driven version had
+  one optional question; the screening-question response carries no
+  per-question required flag at all. Requiring every question is the
+  conservative default until the backend exposes one.
+- Country sends the display name, not the ISO code. The form stores a
+  two-letter code internally; the schema's Country field is a bare string
+  with no format hint, and a bare code in an unconstrained-looking field
+  reads like a typo to whatever's on the other end. Resolved via the same
+  country lookup the dropdown already uses.
+- employmentType needed no guessing at all. Unlike the two enums below, the
+  role responses carry a ready-made human-readable label alongside the
+  numeric employment-type value — the API supplies the label, so nothing
+  here invents one.
+
+### Two things flagged, not guessed past
+
+Both are called out in code comments at the point they matter, not just
+here, because they carry real risk if wrong and neither is verifiable without
+a live server:
+
+1. The screening-answers multipart array encoding. The schema gives the
+   field as an array of question-id/answer pairs with no encoding style
+   beyond the default — which doesn't say how an ASP.NET Core form-bound
+   list expects a nested array serialized over multipart/form-data. Indexed
+   dot-notation is the standard convention for that binder and is what's
+   sent, but it's a convention, not something the spec states. Verify
+   against a live server before trusting this.
+2. NoticePeriod and YearsOfRelevantExperience have zero label metadata —
+   bare integer enums, values 1 through 5, no variable names, no
+   description, no sibling text field. The option labels kept are this
+   site's existing content-document copy, in the most plausible ordering —
+   but which label maps to which of the five backend values has not been
+   confirmed. For experience specifically, the document's original six bands
+   were collapsed to five by merging only the top two, keeping four of five
+   labels verbatim rather than inventing a fresh five-way split.
+
+### Verified beyond the type/lint/build gate
+
+Ran the actual production server and curled every route directly, including
+a slug that doesn't exist:
+
+| Route                                              | Result                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/resources/careers`                               | 200, honest "couldn't load open roles" (no API configured here)                                                                      |
+| `/resources/careers/senior-backend-engineer`       | 200, honest "couldn't load this role"                                                                                                |
+| `/resources/careers/senior-backend-engineer/apply` | 200, honest "couldn't load this application form"                                                                                    |
+| `/resources/careers/this-role-does-not-exist`      | 200, same honest message — not a wrongful 404, since the overview fetch itself failed and genuine nonexistence couldn't be confirmed |
+
+All four are the fallback branch, since `NEXT_PUBLIC_API_BASE_URL` is unset in
+this environment — exactly the designed behaviour. Confirms the pages don't
+crash, `dynamicParams = true` correctly serves unlisted slugs on demand
+instead of hard-404ing, and the three failure messages are each worded for
+their page rather than one generic string.
+
+---
+
+## 2026-08-30 — Task-tracker batch: nav cleanup, business-app links, required `keywords`
+
+### Ticket 12 (re-surfaced) — Security & Compliance footer link now removed
+
+Previously flagged rather than actioned: the ticket read "till we have
+something," and by the time it was raised the page had already been fully
+populated from the content document — removing the link looked like undoing
+real, shipped work. The user re-showed the same ticket, unchanged, in this
+batch — taken as confirmation to proceed per "a repeated instruction is a
+decision." Removed the footer entry only. The route, its content, its
+indexing and its sitemap entry are all untouched; it is reachable by direct
+URL and still ranks, just not linked from the footer.
+
+### Ticket 17 — Integration Hub nav entries removed
+
+Same treatment, both places it appeared: the header's Developers mega-menu
+column and the footer's Developers group. Read "comment out" literally — a
+navigation-visibility change, not a content or indexing one. The page, its
+`[integration]` children, their sitemap entries and `noIndex` status are all
+unchanged. `integration-card.tsx`'s internal links from the hub's own grid to
+each integration's detail page were left alone; those are the hub functioning
+as a page, not a global nav entry, and removing them would break the page for
+anyone who reaches it directly.
+
+### Ticket 9 — "Automate Everything" CTA band
+
+The one CTA band explicitly named as out of scope in the earlier "Get
+Started" pass ("the CTA band … still points at /sign-up and were left
+alone") — now in scope by name. Same treatment as the hero and workflow
+section: "Get Started" now points at `getBusinessAppUrl()`, and the "View
+Github" button beside it is gone. Once removed, `<GithubIcon>` had no
+remaining callers anywhere in the codebase (confirmed by grep — the only
+other hits were doc-comment mentions, not imports), so the component file
+itself was deleted rather than left as dead code.
+
+### Ticket 18 — "Sign In" routes to the business app's real login route
+
+`signsig-web`'s `(auth)` route group has `login.tsx` — a parenthesised
+segment in file-based routing (Next.js and TanStack Router both treat it the
+same way) does not appear in the URL, so the real path is `/login`, not
+`/auth/login`. `SIGN_IN_NAV.href` is now `` `${getBusinessAppUrl()}/login` ``.
+`SIGN_UP_NAV` is untouched — the ticket named Sign In only, and it still
+points at the in-repo `/sign-up` placeholder pending a separate decision on
+where every remaining `/sign-up` reference should go.
+
+### Ticket 19 — OG/Twitter cards were already fully implemented; `keywords` was the actual gap
+
+Checked before writing anything: `buildMetadata()` has unconditionally
+populated `openGraph` and `twitter` fields for every page since it was built,
+and every one of the 17 top-level routes already called it (directly or
+through `policyMetadata()`/`trustMetadata()`) with a real, page-specific
+title and description — verified against the built HTML
+(`og:title`, `og:description`, `og:image`, `og:site_name`,
+`twitter:card`, `twitter:title`, `twitter:description`, `twitter:image` all
+present and correct on the home page). The one thing genuinely missing was a
+`keywords` meta tag, which `BuildMetadataOptions` never had a field for.
+
+**Made `keywords` a required field, not an optional one with a default.** An
+optional field is exactly the kind of thing that silently stops being true
+the moment someone adds a page and forgets it — "every page has keywords" is
+worth nothing as an audited claim if nothing enforces it. Requiring it turned
+the rollout into a compiler-driven checklist: adding the field with no
+default broke every existing call site (`tsc` listed all 15 — file paths,
+not guesses), and each one got a real set of terms grounded in that specific
+page's own content, not a single list pasted everywhere (which is keyword
+stuffing and defeats the tag's purpose). Confirmed in the built HTML that the
+home page and `/pricing` render different, page-appropriate keyword lists.
+
+Templated routes (Solutions, Careers roles, Integration guides, Knowledge
+Base collections) derive their keywords from the same per-instance data that
+already drives their title and description, rather than a hand-written array
+per instance — the same principle that keeps a templated route's title from
+drifting, applied to its keywords. Policies and trust pages, which share one
+metadata-building function across 3 and 5 pages respectively, got a small
+per-id/per-slug keyword map inside that function rather than a single shared
+list.
+
+Verified in the running production server, not just the type/build gate:
+`/` and `/pricing` render distinct `<meta name="keywords">` content;
+`tsc --noEmit` is clean with zero remaining call sites.

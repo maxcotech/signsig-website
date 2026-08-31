@@ -32,6 +32,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "Current status of SignSig infrastructure and APIs.",
     path: "/resources/system-status",
     noIndex: !status.isLive,
+    keywords: [
+      "SignSig status",
+      "SignSig uptime",
+      "system status",
+      "service health",
+    ],
   });
 }
 

@@ -2,18 +2,23 @@
 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  SCREENING_QUESTIONS,
-  countWords,
-} from "@/features/careers/application/application.data";
+import { countWords } from "@/features/careers/application/application.data";
 import type { ApplicationDraft } from "@/features/careers/application/types";
+import type { JobScreeningQuestion } from "@/features/careers/careers.types";
 import { cn } from "@/lib/utils";
 
 /**
  * Step 3 — Screening Questions.
  *
- * Six textareas, each with the design's own word limit shown as "N/limit
- * words".
+ * `questions` now comes from GET /Careers/ScreeningQuestions, fetched
+ * server-side by the apply page and passed down — not a static local array.
+ * Word limits are `question.maxWords`, from the API.
+ *
+ * ⚠ Every question renders as required. The API gives no per-question
+ * required flag (unlike the earlier content-document-driven version, which
+ * had one optional question) — `JobScreeningQuestionResponse` is just
+ * `{id, questionText, maxWords, sortOrder}`. Requiring all of them is the
+ * conservative default until the backend exposes one.
  *
  * The counter is NOT a hard cap: typing past the limit turns it destructive
  * and blocks the step rather than silently truncating what someone wrote.
@@ -24,9 +29,11 @@ import { cn } from "@/lib/utils";
  * current count are announced with the question, not stranded as decoration.
  */
 export function StepScreening({
+  questions,
   draft,
   update,
 }: {
+  questions: readonly JobScreeningQuestion[];
   draft: ApplicationDraft;
   update: (patch: Partial<ApplicationDraft>) => void;
 }) {
@@ -40,36 +47,30 @@ export function StepScreening({
         Screening Questions
       </h2>
 
-      {SCREENING_QUESTIONS.map((question) => {
-        const value = draft.answers[question.id] ?? "";
+      {questions.map((question) => {
+        const key = String(question.id);
+        const value = draft.answers[key] ?? "";
         const words = countWords(value);
-        const over = words > question.limit;
-        const counterId = `${question.id}-count`;
+        const over = words > question.maxWords;
+        const fieldId = `screening-${key}`;
+        const counterId = `${fieldId}-count`;
 
         return (
-          <div key={question.id} className="flex flex-col gap-2">
-            {/* The `*` is rendered from the data's `required` flag rather than
-                being baked into the label string, so the marker and the actual
-                constraint can never disagree. Question 5 is optional. */}
-            <Label
-              htmlFor={question.id}
-              className="text-body-sm text-foreground"
-            >
-              {question.label}
-              {question.required && (
-                <span aria-hidden="true" className="text-muted-foreground">
-                  {" *"}
-                </span>
-              )}
+          <div key={key} className="flex flex-col gap-2">
+            <Label htmlFor={fieldId} className="text-body-sm text-foreground">
+              {question.questionText}
+              <span aria-hidden="true" className="text-muted-foreground">
+                {" *"}
+              </span>
             </Label>
 
             <div className="relative">
               <Textarea
-                id={question.id}
+                id={fieldId}
                 value={value}
-                onChange={(event) => setAnswer(question.id, event.target.value)}
+                onChange={(event) => setAnswer(key, event.target.value)}
                 placeholder="Enter response"
-                required={question.required}
+                required
                 aria-describedby={counterId}
                 aria-invalid={over || undefined}
                 className="min-h-28 rounded-lg pr-28 text-body-sm"
@@ -82,14 +83,14 @@ export function StepScreening({
                   over ? "text-destructive-text" : "text-muted-foreground",
                 )}
               >
-                {words}/{question.limit} words
+                {words}/{question.maxWords} words
               </span>
             </div>
 
             {over && (
               <p className="text-body-sm text-destructive-text">
-                {words - question.limit} word
-                {words - question.limit === 1 ? "" : "s"} over the limit.
+                {words - question.maxWords} word
+                {words - question.maxWords === 1 ? "" : "s"} over the limit.
               </p>
             )}
           </div>

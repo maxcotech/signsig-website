@@ -29,6 +29,13 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Start free, scale as you grow. All plans include legally binding signatures and verification certificates. From ₦2,000/month, with a 30-day free trial and no credit card required.",
   path: "/pricing",
+  keywords: [
+    "SignSig pricing",
+    "e-signature pricing",
+    "document signing plans",
+    "electronic signature cost",
+    "free trial e-signature",
+  ],
 });
 
 export default function PricingPage() {

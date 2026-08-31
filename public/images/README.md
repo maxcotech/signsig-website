@@ -6,6 +6,28 @@ Name files `kebab-case` and descriptively (`pricing-hero-desktop.webp`, not `img
 
 ---
 
+## `signsig-favicon.webp` — the source for every app icon
+
+64×64, transparent, the document-and-signature mark in brand green. It is the
+**source**, not a served asset. The icons are generated from it:
+
+| Generated file              | Size       | Notes                                              |
+| --------------------------- | ---------- | -------------------------------------------------- |
+| `src/app/favicon.ico`       | 16, 32, 48 | Multi-size, PNG-in-ICO                             |
+| `src/app/icon.png`          | 64         | Transparent                                        |
+| `src/app/apple-icon.png`    | 180        | **Opaque** — iOS composites black behind alpha     |
+| `public/icons/icon-192.png` | 192        | **Opaque**, mark inside the inner 80% — `maskable` |
+| `public/icons/icon-512.png` | 512        | Transparent — `purpose: any`                       |
+
+The three under `src/app/` are Next.js **file conventions**; they emit the
+`<link>` tags on their own. Do not add an `icons` key to `metadata` — it
+overrides them. The two under `public/icons/` are what `app/manifest.ts`
+declares.
+
+⚠ 64px is the largest source available, so 192 and 512 are upscaled. The mark
+is flat and simple so it holds up, but replace this file if a larger export or
+an SVG arrives and re-run the generation.
+
 ## `home/` — extracted from the home page design PNG
 
 These are **not** hand-authored assets. Every file was cropped out of the

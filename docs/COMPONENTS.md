@@ -158,12 +158,6 @@ docs/DECISIONS.md.
 | `children` | `ReactNode`                         | —           | The label                                                                                        |
 | `variant`  | `"neutral" \| "brand" \| "on-dark"` | `"neutral"` | `brand` = fully brand-coloured text; `on-dark` = translucent white, for a brand-green background |
 
-### `<GithubIcon>` — `common/github-icon.tsx`
-
-The GitHub mark. Not in this project's `lucide-react` version (brand icons
-were split out of the core set) — inlines the standard octicon path. Props:
-`ComponentProps<"svg">`.
-
 ### `<Logo>` — `common/logo.tsx`
 
 | Prop        | Type      | Default | Notes                 |
@@ -207,6 +201,16 @@ once in the root layout. **Do not change `attribute`** — `globals.css` declare
 
 Props: those of `next-themes`' provider.
 
+### `<QueryProvider>` — `common/query-provider.tsx`
+
+TanStack Query provider for `src/lib/api/` — see `docs/API.md`. Mounted once
+in the root layout, wrapping `<ThemeProvider>`. Creates its `QueryClient` with
+`useState`, not at module scope, so a server-rendered request cannot leak one
+visitor's query cache into another's — read the file's own doc comment before
+"simplifying" this to a module-level singleton.
+
+Props: `{ children: React.ReactNode }`.
+
 ---
 
 ## Shared page sections — `src/components/common/sections/`
@@ -231,7 +235,8 @@ section, that is a different section.
 | `<PricingSection>`    | `sections/pricing-section.tsx`    | `pricing-tiers.data.ts`  |
 
 All take **no props except `<PricingSection>`**, which takes
-`headingLevel?: "h1" | "h2"` (default `"h2"`). `<WorkflowStepCard>`,
+`variant?: "summary" | "page"` (default `"summary"`) — see the file's own
+doc comment for what each variant changes. `<WorkflowStepCard>`,
 `<PricingCard>` and `<PricingPeriodToggle>` are private children; the data
 files are colocated here because the components that render them live here.
 
@@ -571,34 +576,56 @@ index. Add a file in `src/content/integrations/guides/` and wire it into
 
 ### `careers` — Careers index and job postings
 
-| Route                             | Page                                           |
-| --------------------------------- | ---------------------------------------------- |
-| `/resources/careers`              | "Join the SignSig team" + department accordion |
-| `/resources/careers/[role]`       | One job posting (2 prerendered)                |
-| `/resources/careers/[role]/apply` | 4-step application wizard (UI only)            |
+✅ **Live since 2026-08-29.** Every page here reads GET /Careers/Roles,
+GET /Careers/Roles/{id} or GET /Careers/ScreeningQuestions — see
+`swagger.json`'s Careers tag and `docs/API.md`. There is no static role data
+left in the repo; `careers.data.ts` and `role-details.data.ts` are deleted.
 
-| Component               | Notes                                            |
-| ----------------------- | ------------------------------------------------ |
-| `<DepartmentAccordion>` | 7 departments; roles grouped under each          |
-| `<RoleDescription>`     | About / Responsibilities / Skills / Nice to Have |
+| Route                             | Page                                         |
+| --------------------------------- | -------------------------------------------- |
+| `/resources/careers`              | "Join the SignSig team" + category accordion |
+| `/resources/careers/[role]`       | One job posting, `dynamicParams = true`      |
+| `/resources/careers/[role]/apply` | 4-step application wizard, submits for real  |
 
-The accordion is `type="multiple"` with Engineering open by default —
-Engineering is the only department with roles, so opening an empty one first
-would look broken. Departments with no openings say so rather than expanding
-to nothing.
+| Component               | Notes                                                      |
+| ----------------------- | ---------------------------------------------------------- |
+| `<DepartmentAccordion>` | Categories from the API's `categories[]`, not a fixed list |
+| `<RoleDescription>`     | About / Responsibilities / Skills / Nice to Have           |
+| `<CareersUnavailable>`  | Shared honest-failure state, all three pages               |
 
-⚠ **The design claims "149 Open roles" and lists two.** The count is
-**derived** from `ROLES`, so the page currently reads "Explore 2 Open roles"
-and cannot advertise openings that do not exist. Add roles to
-`careers.data.ts` and the heading, groups and sitemap all follow.
+**`careers.api.ts`** (feature root, not `components/`) holds the three
+server-side reads — `getJobRolesOverview`, `getJobRoleDetail`,
+`getScreeningQuestions` — plus `roleSlug()`, `flattenRoles()`,
+`findRoleBySlug()`, `summaryToFallbackDetail()` and `formatSalaryRange()`.
+Plain async functions, not `useQuery` hooks: these are reads with no client
+interactivity, and `generateStaticParams` cannot use a hook at all. All three
+are wrapped in React's `cache()` — `getService` goes through axios, not
+`fetch()`, so Next's automatic request dedup doesn't apply, and without
+`cache()` `generateMetadata` and the page component would each re-fetch.
 
-⚠ **Only Senior Backend Engineer has a description.** Security Engineer shows
-its meta plus an honest note and is `noIndex`; only roles with a `detail`
-reach the sitemap.
+**URLs are still slugs, not the API's numeric ids.** `/resources/careers/{id}`
+would have been the direct mapping; `roleSlug()` derives a slug from `title`
+instead, so the existing pretty URLs survive the switch to a live backend.
+`dynamicParams = true` on both `[role]` routes (was `false`): the set of open
+roles can now change without a rebuild, and `generateStaticParams` returns `[]`
+on any fetch failure rather than failing the build.
+
+**Three honest-failure states, not one.** `<CareersUnavailable>` renders when
+a live fetch fails — never `notFound()`, which is reserved for the API
+confirming a role genuinely doesn't exist. A network hiccup and "this role
+was never posted" are different conditions and get different treatment; see
+the doc comment on `[role]/page.tsx` for the exact decision tree.
+
+⚠ **Two enums have no label metadata anywhere in `swagger.json`** —
+`NoticePeriod` and `YearsOfRelevantExperience`. See
+`application/notice-experience-options.data.ts`'s warning: the option text is
+this site's existing content-document copy, kept as the most plausible
+ordering, but the number a label maps to is UNCONFIRMED against the backend.
+Verify before trusting this in production.
 
 **No `JobPosting` structured data is emitted.** Google requires `datePosted`,
-`hiringOrganization` and `validThrough`; inventing those would put fabricated
-dates in the search index. Add it once roles carry real posting dates.
+`hiringOrganization` and `validThrough`, which the API doesn't return; add it
+once it does.
 
 ### `policies` — the three legal pages
 
@@ -662,32 +689,51 @@ the page sideways at 360px.
 `/resources/careers/[role]/apply`. All files under
 `src/features/careers/application/`.
 
-| File                         | Role                                                 |
-| ---------------------------- | ---------------------------------------------------- |
-| `application-form.tsx`       | **Client.** Orchestrator: draft state, steps, submit |
-| `step-tabs.tsx`              | Progress tabs — active / visited / ahead             |
-| `step-body.tsx`              | Step id → step component; the only dispatch          |
-| `step-personal-info.tsx`     | Step 1                                               |
-| `step-professional-info.tsx` | Step 2                                               |
-| `step-screening.tsx`         | Step 3 — 6 word-counted textareas                    |
-| `step-documents.tsx`         | Step 4 — uploads + consent                           |
-| `cover-letter-field.tsx`     | Upload **or** write inline; both optional            |
-| `field.tsx`                  | `<Field>`, `<TextField>`, `<SelectField>`            |
-| `file-dropzone.tsx`          | Drop-or-browse with size/type checks                 |
-| `success-dialog.tsx`         | "Thank you for applying!"                            |
-| `submit-application.ts`      | **The only seam to a backend**                       |
-| `application.data.ts`        | Questions, limits, consent copy, options             |
-| `types.ts`                   | `ApplicationDraft`                                   |
+✅ **Submits for real** (2026-08-29) — POST /Careers/Roles/{id}/Apply via
+`useSubmitApplication()`. Was UI-only with a hardcoded `not-configured` result
+(`submit-application.ts`, deleted); that's gone, replaced by the real mutation.
+
+| File                                | Role                                                     |
+| ----------------------------------- | -------------------------------------------------------- |
+| `application-form.tsx`              | **Client.** Orchestrator: draft state, steps, submit     |
+| `application-form-footer.tsx`       | Back/Next/Submit row + the final-step consent note       |
+| `step-tabs.tsx`                     | Progress tabs — active / visited / ahead                 |
+| `step-body.tsx`                     | Step id → step component; the only dispatch              |
+| `step-personal-info.tsx`            | Step 1                                                   |
+| `step-professional-info.tsx`        | Step 2 — no "Desired Role"; see below                    |
+| `step-screening.tsx`                | Step 3 — questions come from the API, not a static array |
+| `step-documents.tsx`                | Step 4 — uploads + consent                               |
+| `cover-letter-field.tsx`            | Upload **or** write inline; both optional                |
+| `field.tsx`                         | `<Field>`, `<TextField>`, `<SelectField>`                |
+| `file-dropzone.tsx`                 | Drop-or-browse with size/type checks                     |
+| `success-dialog.tsx`                | "Thank you for applying!"                                |
+| `careers-application.api.ts`        | **The seam to the backend** — `useSubmitApplication()`   |
+| `build-apply-form-data.ts`          | `ApplyPayload` type + the multipart `FormData` builder   |
+| `draft-to-apply-payload.ts`         | `ApplicationDraft` → `ApplyPayload`                      |
+| `notice-experience-options.data.ts` | Notice/experience `<select>` labels — read the warning   |
+| `application.data.ts`               | Steps, consent copy, upload constraints                  |
+| `types.ts`                          | `ApplicationDraft`                                       |
+
+**"Desired Role" is gone.** The real Apply endpoint has no field for it —
+which role this is comes from the URL path (`/Roles/{id}/Apply`), not a form
+field. Removing a field the API silently ignored was part of the integration,
+not a separate content change.
+
+**The cover letter textarea becomes a `.txt` file at submit time.** The API
+has one binary `CoverLetter` field, no text-body equivalent for the "write it
+inline" alternative — `build-apply-form-data.ts` packages typed text into a
+plain-text `File` rather than dropping it. An actual upload wins if both are
+present.
 
 `<Field>` takes an optional `help` string; it renders as `id="<htmlFor>-help"`,
 so the call site must add `aria-describedby` or the hint is visible but
 unannounced. `<FileDropzone>` takes `prompt` — résumé and cover letter use
 different copy.
 
-**Required markers come from data, not from label strings.** Screening
-questions and the personal-info fields carry a `required` flag; the `*` is
-rendered from it and is `aria-hidden`. That way the marker and the actual
-constraint cannot disagree — which they did, in the design, for four fields.
+**Screening questions render as required now.** The design/content-document
+version had one optional question; `JobScreeningQuestionResponse` has no
+per-question required flag at all, so every question defaults to required —
+the conservative choice until the backend exposes one.
 
 **Each step is its own `<form>`**, so "Next" is a real submit button and the
 browser's own constraint validation gates each step — required fields, `email`

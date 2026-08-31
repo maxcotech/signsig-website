@@ -11,6 +11,13 @@ import { buildMetadata } from "@/lib/seo";
  * not being found. It clears itself the moment `sections` is filled in — see
  * `policies.data.ts`.
  */
+/** One small set per policy, not a single list reused across all three. */
+const KEYWORDS: Record<string, readonly string[]> = {
+  terms: ["SignSig terms of service", "terms and conditions", "SignSig legal"],
+  privacy: ["SignSig privacy policy", "data privacy", "SignSig legal"],
+  "cookie-policy": ["SignSig cookie policy", "cookie usage", "SignSig legal"],
+};
+
 export function policyMetadata(id: string): Metadata {
   const policy = findPolicy(id);
   if (!policy) return {};
@@ -24,5 +31,6 @@ export function policyMetadata(id: string): Metadata {
       : `${policy.title} for SignSig — not yet published.`,
     path: policy.path,
     noIndex: !published,
+    keywords: KEYWORDS[id] ?? [policy.title, "SignSig legal"],
   });
 }

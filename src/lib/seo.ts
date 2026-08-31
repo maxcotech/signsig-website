@@ -32,6 +32,14 @@ export type BuildMetadataOptions = {
   image?: { path: string; width?: number; height?: number; alt?: string };
   /** Keep this page out of search results. Use for thank-you and preview pages. */
   noIndex?: boolean;
+  /**
+   * 3-8 terms specific to THIS page — never the site-wide list copy-pasted
+   * everywhere, which is the one thing that makes a `keywords` tag worthless.
+   * Required, not optional: every call site must supply its own, which is
+   * what makes "every page has keywords" a compiler-checked fact rather than
+   * a claim that quietly rots as pages are added.
+   */
+  keywords: readonly string[];
 };
 
 export function buildMetadata({
@@ -40,7 +48,8 @@ export function buildMetadata({
   path = "/",
   image,
   noIndex = false,
-}: BuildMetadataOptions = {}): Metadata {
+  keywords,
+}: BuildMetadataOptions): Metadata {
   const canonical = absoluteUrl(path);
   const og = image ?? SITE.ogImage;
   const ogImage = {
@@ -60,6 +69,7 @@ export function buildMetadata({
     // page wants. Verified against the prerendered HTML.
     ...(title ? { title } : {}),
     description,
+    keywords: [...keywords],
     alternates: { canonical },
     openGraph: {
       type: "website",

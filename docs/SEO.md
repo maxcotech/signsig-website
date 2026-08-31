@@ -20,19 +20,43 @@ export const metadata: Metadata = buildMetadata({
   title: "Pricing", // no brand suffix — the template adds it
   description: "Simple per-seat pricing …", // 120-160 chars
   path: "/pricing", // drives the canonical URL
+  keywords: ["SignSig pricing", "e-signature pricing"], // 3-8 terms, THIS page
 });
 ```
 
-| Option        | Type                               | Default            | Notes                                                                                                                     |
-| ------------- | ---------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `title`       | `string?`                          | —                  | **Without** the brand. The root template appends `" \| SignSig"`. **Omit on the home page** so the absolute default wins. |
-| `description` | `string?`                          | `SITE.description` | Aim 120–160 characters.                                                                                                   |
-| `path`        | `string?`                          | `"/"`              | Root-relative. Drives `alternates.canonical` and the OG URL.                                                              |
-| `image`       | `{ path, width?, height?, alt? }?` | dynamic OG route   | Per-page social image.                                                                                                    |
-| `noIndex`     | `boolean?`                         | `false`            | Sets `robots: { index: false, follow: false }`.                                                                           |
+| Option        | Type                               | Default             | Notes                                                                                                                     |
+| ------------- | ---------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | `string?`                          | —                   | **Without** the brand. The root template appends `" \| SignSig"`. **Omit on the home page** so the absolute default wins. |
+| `description` | `string?`                          | `SITE.description`  | Aim 120–160 characters.                                                                                                   |
+| `path`        | `string?`                          | `"/"`               | Root-relative. Drives `alternates.canonical` and the OG URL.                                                              |
+| `image`       | `{ path, width?, height?, alt? }?` | dynamic OG route    | Per-page social image.                                                                                                    |
+| `noIndex`     | `boolean?`                         | `false`             | Sets `robots: { index: false, follow: false }`.                                                                           |
+| `keywords`    | `readonly string[]`                | **none — required** | 3–8 terms specific to THIS page. See below.                                                                               |
 
-It returns a fully populated object: title, description, canonical,
+It returns a fully populated object: title, description, keywords, canonical,
 `openGraph`, `twitter`, `robots`.
+
+### `keywords` is required, on purpose
+
+Every call to `buildMetadata()` must supply its own `keywords` array — there
+is no default, and omitting it is a type error, not a silent fallback. That is
+deliberate: "every page has keywords" is worth nothing as a claim if it can
+quietly stop being true the next time a page is added. Making the field
+required turns it into something the compiler checks.
+
+**Never reuse one list across pages.** A `keywords` tag copy-pasted onto
+every page is textbook keyword stuffing and defeats the point of having one —
+each set should name only what is actually on that page. For a page whose
+identity is genuinely site-wide (the 404 page, say), that's fine — its
+keywords are just correspondingly generic (`["404", "page not found"]`).
+
+For a route rendering many instances from one template (Solutions, Careers
+roles, Integration guides, …), derive the keywords from the same per-instance
+data driving the title and description — see
+`app/(marketing)/solutions/[slug]/page.tsx` or
+`app/(marketing)/developers/integration-hub/[integration]/page.tsx` for the
+pattern. Do not hand-write a keyword array per instance of a templated route;
+that is the same drift risk as hardcoding a title.
 
 Dynamic routes use `generateMetadata()` and call the same function:
 
@@ -44,6 +68,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
     title: post.title,
     description: post.excerpt,
     path: `/blog/${slug}`,
+    keywords: [post.title, ...post.tags], // derived from the same instance
   });
 }
 ```
@@ -103,6 +128,9 @@ Tick every line before declaring the page done.
 - [ ] Page exports `metadata` (or `generateMetadata`) built via
       `buildMetadata()`. **No inline `<head>` tags. No page ships without
       metadata.**
+- [ ] `keywords` passed is real and page-specific — not the same array pasted
+      from another page. The compiler enforces the field exists; it cannot
+      enforce that it means anything.
 - [ ] Route added to `src/config/routes.ts`.
 - [ ] **Exactly one `<h1>`** per page; heading levels descend without skipping
       (no `h2` → `h4`).

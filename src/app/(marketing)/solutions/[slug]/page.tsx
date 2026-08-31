@@ -47,6 +47,12 @@ export async function generateMetadata({
     // a second, invented description that could drift from the page.
     description: solution.copy.description,
     path: solutionHref(slug),
+    keywords: [
+      solution.label,
+      `${solution.label} e-signature`,
+      "SignSig",
+      "document signing solution",
+    ],
   });
 }
 

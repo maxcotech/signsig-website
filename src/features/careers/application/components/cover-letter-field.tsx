@@ -16,7 +16,10 @@ import { cn } from "@/lib/utils";
  * upload-only control. Both are optional, so neither is disabled when the
  * other is used: forcing a choice would mean a candidate who typed a draft
  * and then decided to attach a polished PDF has to clear the box first.
- * The endpoint takes whichever is filled — see submit-application.ts.
+ * The endpoint takes whichever is filled — typed text is packaged into a
+ * plain-text file before sending, since the real API has one binary
+ * CoverLetter field and no separate text slot. See
+ * careers-application.api.ts.
  */
 export function CoverLetterField({
   file,

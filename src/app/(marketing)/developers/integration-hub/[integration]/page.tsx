@@ -40,6 +40,12 @@ export async function generateMetadata({
     path: pathFor(slug),
     // Guides that have no content yet should not be indexed as thin pages.
     noIndex: !integration.guide,
+    keywords: [
+      `${integration.name} integration`,
+      `SignSig ${integration.name}`,
+      "e-signature integration",
+      "document signing integration",
+    ],
   });
 }
 

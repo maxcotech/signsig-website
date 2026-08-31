@@ -10,7 +10,6 @@
  */
 
 import { SOLUTIONS, solutionHref } from "@/config/solutions";
-import { ROLES } from "@/features/careers/careers.data";
 import { INTEGRATIONS } from "@/features/integrations/integrations.data";
 import { KB_COLLECTIONS } from "@/features/knowledge-base/collections.data";
 import { POLICIES, isPublished } from "@/features/policies/policies.data";
@@ -115,15 +114,12 @@ export const ROUTES: readonly RouteEntry[] = [
     priority: 0.5,
     isIndexed: true,
   },
-  // Only roles with a published description reach the sitemap; the rest are
-  // thin postings and stay noIndex until their `detail` is filled in.
-  ...ROLES.filter((role) => role.detail).map((role): RouteEntry => ({
-    path: `/resources/careers/${role.slug}`,
-    label: role.title,
-    changeFrequency: "weekly",
-    priority: 0.5,
-    isIndexed: true,
-  })),
+  // Individual role postings are NOT listed here on purpose. Roles now come
+  // live from GET /Careers/Roles, and this file is a synchronous module-level
+  // list evaluated at build time — it cannot await a network call. Role pages
+  // are appended to the sitemap separately, in app/sitemap.ts, which CAN be
+  // async; they are still fully reachable (dynamicParams = true), just not
+  // enumerated in this static registry. See docs/DECISIONS.md.
   {
     path: "/resources/knowledge-base",
     label: "Knowledge Base",

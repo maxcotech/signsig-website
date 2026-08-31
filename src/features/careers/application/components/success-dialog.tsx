@@ -14,11 +14,11 @@ import {
 /**
  * "Thank you for applying!" — copy transcribed verbatim from the design.
  *
- * ⚠ This is only ever opened when `submitApplication()` returns `{ ok: true }`.
- * With no endpoint configured that never happens, which is the point: a
- * confirmation that appears without anything having been sent would tell a
- * candidate they had applied when they had not. Do not open it optimistically
- * or "for testing" in committed code.
+ * ⚠ `<ApplicationForm>` only sets its `submitted` flag (what opens this) after
+ * `useSubmitApplication()`'s mutation genuinely resolves — see
+ * careers-application.api.ts. A confirmation that appears without anything
+ * having been sent would tell a candidate they had applied when they had
+ * not. Do not open it optimistically or "for testing" in committed code.
  */
 export function SuccessDialog({ open }: { open: boolean }) {
   return (

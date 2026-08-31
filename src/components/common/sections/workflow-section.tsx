@@ -1,15 +1,19 @@
-import Link from "next/link";
 import { ZapIcon } from "lucide-react";
 
 import { ActionButton } from "@/components/common/action-button";
 import { EyebrowBadge } from "@/components/common/eyebrow-badge";
 import { Section } from "@/components/layout/section";
+import { getBusinessAppUrl } from "@/config/site";
 
 import { WorkflowStepCard } from "./workflow-step-card";
 import { WORKFLOW_STEPS } from "./workflow-steps.data";
 
 /**
  * "How You Get Documents Signed" — the 3-step workflow strip.
+ *
+ * "Get Started With SignSig" routes to the SignSig business app
+ * (`getBusinessAppUrl()`), same as the hero's "Get Started" — this is where a
+ * visitor actually starts using the product, not an in-repo `/sign-up` route.
  *
  * RESPONSIVE: 3 columns at `md`+ (the design's row of 3 already fits within
  * one column at the doctrine's 2-up tablet step, so 2 columns would leave an
@@ -39,7 +43,7 @@ export function WorkflowSection() {
         </p>
 
         <ActionButton asChild size="lg" className="mt-stack-gap">
-          <Link href="/sign-up">Get Started With SignSig</Link>
+          <a href={getBusinessAppUrl()}>Get Started With SignSig</a>
         </ActionButton>
       </div>
 

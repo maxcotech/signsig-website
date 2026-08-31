@@ -1,13 +1,19 @@
-import Link from "next/link";
 import { ChevronRightIcon, ZapIcon } from "lucide-react";
 
 import { ActionButton } from "@/components/common/action-button";
 import { EyebrowBadge } from "@/components/common/eyebrow-badge";
-import { GithubIcon } from "@/components/common/github-icon";
 import { Section } from "@/components/layout/section";
+import { getBusinessAppUrl } from "@/config/site";
 
 /**
  * The home page hero. Copy transcribed verbatim from the design.
+ *
+ * "Get Started" leaves this site entirely — it sends the visitor to the
+ * SignSig business app (`getBusinessAppUrl()`) to actually sign up, rather
+ * than the in-repo `/sign-up` route other CTAs on this site still use (that
+ * route resolves nowhere; changing it site-wide is a separate task). The
+ * "View Github" button that used to sit beside it is removed per the task
+ * tracker; there is no secondary CTA here now.
  *
  * THE TINTED AREA IS AN INSET PANEL, NOT A FULL-BLEED BAND. This was wrong
  * until 2026-08-26: the background sat on the `<section>`, so the tint ran to
@@ -64,21 +70,11 @@ export function HomeHero() {
           for businesses and institutions that need certainty.
         </p>
 
-        <div className="mt-stack-gap flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-stack-gap">
           <ActionButton asChild size="lg">
-            <Link href="/sign-up">
+            <a href={getBusinessAppUrl()}>
               Get Started
               <ChevronRightIcon aria-hidden="true" />
-            </Link>
-          </ActionButton>
-          <ActionButton asChild size="lg" variant="outline">
-            <a
-              href="https://github.com/signsig"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View Github
-              <GithubIcon aria-hidden="true" />
             </a>
           </ActionButton>
         </div>

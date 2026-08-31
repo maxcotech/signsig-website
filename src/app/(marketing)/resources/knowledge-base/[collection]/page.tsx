@@ -43,6 +43,11 @@ export async function generateMetadata({
     // titles. Indexing it would put an empty result in front of someone
     // searching for the answer. Flip when bodies land.
     noIndex: true,
+    keywords: [
+      collection.title,
+      "SignSig knowledge base",
+      `${collection.title.toLowerCase()} guide`,
+    ],
   });
 }
 

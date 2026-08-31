@@ -44,7 +44,12 @@ src/
 │   ├── utils.ts                  # cn()
 │   ├── seo.ts                    # buildMetadata(), JSON-LD builders
 │   ├── constants.ts              # Breakpoints, frame width, test widths
-│   └── raw-colors.ts             # ESCAPE HATCH. Allowlisted. Read before touching.
+│   ├── raw-colors.ts             # ESCAPE HATCH. Allowlisted. Read before touching.
+│   └── api/                      # API integration layer. See docs/API.md.
+│       ├── client.ts             # The one axios instance
+│       ├── methods.ts            # get/post/put/patch/deleteService
+│       ├── query-client.ts       # createQueryClient()
+│       └── types.ts              # ApiResponse, error + option types
 ├── config/
 │   ├── site.ts                   # Name, URL, description, socials, OG
 │   ├── navigation.ts             # Nav trees — single source of truth

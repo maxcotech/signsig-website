@@ -1,13 +1,19 @@
 import Image from "next/image";
-import { Code2Icon } from "lucide-react";
+import Link from "next/link";
+import { ArrowRightIcon, Code2Icon } from "lucide-react";
 
 import { ActionButton } from "@/components/common/action-button";
-import { GithubIcon } from "@/components/common/github-icon";
 import { Section } from "@/components/layout/section";
 
 /**
  * "{Built For Developers in mind}" — copy and code sample transcribed
  * verbatim from the design.
+ *
+ * The CTA now routes to the SDKs & Libraries page rather than the external
+ * GitHub repo — per the task tracker. It is `<Link>`, not an external `<a>`,
+ * and carries `ArrowRightIcon` (this codebase's convention for a button that
+ * navigates to another page on this site) rather than `GithubIcon`, since it
+ * no longer goes to Github.
  *
  * RESPONSIVE: side-by-side text + code at `lg`+ (matches the design's
  * roughly 2/5–3/5 split); stacked below `lg` with text first, since the copy
@@ -35,14 +41,10 @@ export function DevelopersSection() {
             or deploy it on your own infrastructure for complete control.
           </p>
           <ActionButton asChild variant="outline" className="mt-stack-gap">
-            <a
-              href="https://github.com/signsig"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View on Github
-              <GithubIcon aria-hidden="true" />
-            </a>
+            <Link href="/developers/sdks-libraries">
+              View SDKs &amp; Libraries
+              <ArrowRightIcon aria-hidden="true" />
+            </Link>
           </ActionButton>
         </div>
 
